@@ -2,5 +2,11 @@ from config import *
 from utils import *
 import Player
 
-players = generate_players()
-print(players)
+
+def main():
+    players = generate_players()
+    print(players)
+
+
+if __name__ == '__main__':
+    main()

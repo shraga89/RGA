@@ -1,7 +1,7 @@
-sellers_number = 1
-buyers_number = 1
-products_number = 1
-min_buying_price = 1
-max_buying_price = 100
-min_selling_price = 1
-max_selling_price = 100
+SELLERS_NUMBER = 1
+BUYERS_NUMBER = 1
+PRODUCTS_NUMBER = 1
+MINIMAL_BUYING_PRICE = 1
+MAXIMAL_BUYING_PRICE = 100
+MINIMAL_SELLING_PRICE = 1
+MAXIMAL_SELLING_PRICE = 100
