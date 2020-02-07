@@ -1,8 +1,9 @@
 from config import *
 import random
+from abc import abstractmethod
 
 class Player:
-    def __init__(self, id, _type, budget, products):
+    def __init__(self, id, _type, budget, products, price_setting_policy=None):
         self.id = id
         self.type = _type
         self.price_limits = {'buying_price': {}, 'selling_price': {}}
@@ -12,6 +13,7 @@ class Player:
         self.products_in_inventory = [{p: None for p in products}, ]
         for p in products:
             self.set_initial_prices(p)
+        self.price_setting_policy = price_setting_policy
 
     def set_initial_prices(self, product, method='random'):
         if method == "random":
@@ -45,6 +47,9 @@ class Player:
         selling_prices = self.price_history['selling_price'][product]
         return {'buying_price': buying_prices, 'selling_price': selling_prices}
 
+    def set_current_prices(self):
+        current_prices = self.price_setting_policy.set_prices(self)
+
     def __repr__(self):
         to_print = f"Player {self.id}: \n "
         for product in self.all_existing_products:
@@ -53,3 +58,12 @@ class Player:
 
         return to_print
 
+    class AbstractPriceSettingPolicy:
+        @abstractmethod
+        def set_prices(self, player):
+            pass
+
+    class RationalPriceSetting(AbstractPriceSettingPolicy):
+        def set_prices(self, player):
+            pass
+            # TODO define a policy similar to what was shown in the video
