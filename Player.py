@@ -8,11 +8,12 @@ class Player:
         self.price_limits = {'buying_price': {}, 'selling_price': {}}
         self.price_history = {'buying_price': {}, 'selling_price': {}}
         self.budget = budget
-        self.products = [{p: None for p in products}, ]
+        self.all_existing_products = products
+        self.products_in_inventory = [{p: None for p in products}, ]
         for p in products:
             self.set_initial_prices(p)
 
-    def set_initial_prices(self, product, method):
+    def set_initial_prices(self, product, method='random'):
         if method == "random":
             return self.set_random_initial_prices(product)
         else:
@@ -20,13 +21,15 @@ class Player:
 
     def set_random_initial_prices(self, product):
         if self.type != 'buyer':
-            self.price_history['selling_price'][product][0] = [random.randint(MINIMAL_SELLING_PRICE, MAXIMAL_SELLING_PRICE), ]
-            self.price_history['buying_price'][product][0] = [MINIMAL_BUYING_PRICE - 1,]
-            self.price_limits['buying_price'][product] = [MINIMAL_BUYING_PRICE - 1,]
+            self.price_limits['selling_price'][product] = random.randint(MINIMAL_SELLING_PRICE, MAXIMAL_SELLING_PRICE)
+            self.price_history['selling_price'][product] = [random.randint(self.price_limits['selling_price'][product], MAXIMAL_SELLING_PRICE), ]
+            self.price_history['buying_price'][product] = [MINIMAL_BUYING_PRICE - 1,]
+            self.price_limits['buying_price'][product] = MINIMAL_BUYING_PRICE - 1
         if self.type != 'seller':
-            self.price_history['buying_price'][product][0] = [random.randint(MINIMAL_BUYING_PRICE, MAXIMAL_BUYING_PRICE), ]
-            self.price_history['selling_price'][product][0] = [MAXIMAL_BUYING_PRICE + 1,]
-            self.price_limits['selling_price'][product] = [MAXIMAL_BUYING_PRICE + 1,]
+            self.price_limits['buying_price'][product] = random.randint(MINIMAL_BUYING_PRICE, MAXIMAL_BUYING_PRICE)
+            self.price_history['buying_price'][product] = [random.randint(self.price_limits['buying_price'][product], MAXIMAL_BUYING_PRICE), ]
+            self.price_history['selling_price'][product] = [MAXIMAL_BUYING_PRICE + 1,]
+            self.price_limits['selling_price'][product] = MAXIMAL_BUYING_PRICE + 1
 
     def get_prices_by_time(self, timestamp):
         buying_price = dict()
@@ -41,3 +44,12 @@ class Player:
         buying_prices = self.price_history['buying_price'][product]
         selling_prices = self.price_history['selling_price'][product]
         return {'buying_price': buying_prices, 'selling_price': selling_prices}
+
+    def __repr__(self):
+        to_print = f"Player {self.id}: \n "
+        for product in self.all_existing_products:
+            to_print += f"  will sell {product} for at least {self.price_limits['selling_price'][product]}" \
+                          f"\n   will buy {product} for at most {self.price_limits['buying_price'][product]} \n"
+
+        return to_print
+

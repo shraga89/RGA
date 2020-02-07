@@ -5,7 +5,8 @@ import Player
 
 def main():
     players = generate_players()
-    print(players)
+    for player in players.values():
+        print(player)
 
 
 if __name__ == '__main__':
