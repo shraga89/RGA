@@ -2,6 +2,9 @@ from config import *
 from utils import *
 import Player as pl
 from abc import abstractmethod
+import random
+import copy
+import itertools as itt
 
 
 class Simulation:
@@ -17,28 +20,97 @@ class Simulation:
         pass
 
 
-# class UniformBudgetSimulation(Simulation):
-#     def __init__(self, number_of_sellers, number_of_buyers, number_of_versatile_players, number_of_turns, budget, product_list):
-#         self.players= {}
-#         for i in range(number_of_buyers):
-#             player_id = 'buyer_' + str(i)
-#             self.players[player_id] = pl.ConstantPricePlayer(player_id, 'buyer', budget, product_list)
-#         for i in range(number_of_sellers):
-#             player_id = 'seller_' + str(i)
-#             self.players[player_id] = pl.ConstantPricePlayer(player_id, 'seller', budget, product_list)
-#
-#
-#     def run_simulation(self):
-#         pass
-#
-#     def run_one_step(self):
-#         pass
-#
-#     def print_step_result(self):
-#         pass
-#
-#     def print_end_result(self):
-#         pass
-#
-#     def visualize(self):
-#         pass
+class UniformBudgetSimulation(Simulation):
+    def __init__(self, number_of_sellers, number_of_buyers, number_of_versatile_players, horizon, budget, product_list):
+        super(Simulation, self).__init__()
+        self.history = []
+        self.turn = 0
+        self.horizon = horizon
+        self.players = {'buyers': {},
+                        'sellers': {}}
+        for i in range(number_of_buyers):
+            player_id = 'buyer_' + str(i)
+            new_player = pl.ConstantPricePlayer(player_id, 'buyer', budget, product_list)
+            self.players['buyers'][player_id] = new_player
+        for i in range(number_of_sellers):
+            player_id = 'seller_' + str(i)
+            new_player = pl.ConstantPricePlayer(player_id, 'seller', budget, product_list)
+            self.players['sellers'][player_id] = new_player
+        for i in range(number_of_versatile_players):
+            player_id = 'versatile_' + str(i)
+            new_player = pl.ConstantPricePlayer(player_id, 'versatile', budget, product_list)
+            self.players['buyers'][player_id] = new_player
+            self.players['sellers'][player_id] = new_player
+        self.product_list = product_list
+        self.create_inventory()
+
+    def create_inventory(self):
+        for seller in self.players['sellers'].values():
+            for product in self.product_list:
+                seller.add_inventory(product, self.horizon)
+
+    def run_simulation(self):
+        for t in range(self.horizon):
+            self.run_one_step()
+            self.turn += 1
+        for number, item in enumerate(self.history):
+            print(f"turn number {number + 1}")
+            print("------------")
+            for stuff in item.items():
+                print(stuff)
+
+    def run_one_step(self):
+        self.history.append(set())
+        for product in self.product_list:
+            self.run_one_step_for_single_product(product)
+
+    def run_one_step_for_single_product(self, product):
+
+        sellers_list = [seller_id for seller_id, seller in self.players['sellers'].items()
+                        if seller.has_product_available(product)]
+        buyers_list = list(buyer_id for buyer_id in self.players['buyers'].keys())
+        buyers_dict = {buyer: sellers_list.copy() for buyer in buyers_list}
+
+        while buyers_list:
+            buyer = random.sample(buyers_list, 1)[0]
+            random.shuffle(buyers_dict[buyer])
+            seller = buyers_dict[buyer].pop()
+            if self.create_transaction(self.players['sellers'][seller], self.players['buyers'][buyer], product):
+                buyers_dict.pop(buyer)
+                buyers_list.remove(buyer)
+                sellers_list.remove(seller)
+                for a_buyer, available_sellers in buyers_dict.items():
+                    available_sellers.remove(seller)
+                    if len(available_sellers) == 0:
+                        buyers_dict.pop(a_buyer)
+
+            buyers_list = buyers_dict.keys()
+
+    def create_transaction(self, seller, buyer, product):
+        actual_price = seller.get_current_selling_price(product)
+        if actual_price > buyer.get_current_buying_price(product):
+            return False
+        if actual_price > buyer.budget:
+            return False
+        else:
+            seller.add_inventory(product, -1)
+            buyer.add_inventory(product, 1)
+            seller.budget += actual_price
+            buyer.budget -= actual_price
+            self.history[self.turn] = {'buyer': buyer.get_id(),
+                                       'seller': seller.get_id(),
+                                       'product': product,
+                                       'price': actual_price}
+            return True
+
+
+
+
+    def print_step_result(self):
+        pass
+
+    def print_end_result(self):
+        pass
+
+    def visualize(self):
+        pass

@@ -11,7 +11,7 @@ class Player:
         self.price_history = {'buying_price': {}, 'selling_price': {}}
         self.budget = budget
         self.all_existing_products = products
-        self.products_in_inventory = [{p: None for p in products}, ]
+        self.products_in_inventory = [{p: 0 for p in products}, ]
         for p in products:
             self.set_initial_prices(p, setting_initial_prices)
 
@@ -47,9 +47,22 @@ class Player:
         selling_prices = self.price_history['selling_price'][product]
         return {'buying_price': buying_prices, 'selling_price': selling_prices}
 
+    def get_current_selling_price(self, product):
+        return self.get_price_history_by_product(product)['selling_price'][-1]
+
+    def get_current_buying_price(self, product):
+        return self.get_price_history_by_product(product)['buying_price'][-1]
+
+    def get_id(self):
+        return self.id
+
     @abstractmethod
     def set_current_prices(self):
         pass
+
+    def add_inventory(self, product, amount):
+        self.products_in_inventory[-1][product] += amount
+
 
     def __repr__(self):
         to_print = f"{self.type} \nname: {self.id} \n"
@@ -63,6 +76,9 @@ class Player:
             else:
                 to_print += f"  will buy {product} for at most {self.price_limits['buying_price'][product]}$ \n"
         return to_print
+
+    def has_product_available(self, product):
+        return self.products_in_inventory[-1][product] != 0
 
 
 class ConstantPricePlayer(Player):
