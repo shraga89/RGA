@@ -55,12 +55,15 @@ class UniformBudgetSimulation(Simulation):
             self.turn += 1
         for number, item in enumerate(self.history):
             print(f"turn number {number + 1}")
-            print("------------")
-            for stuff in item.items():
-                print(stuff)
+            print("-------------------------")
+            for number_stuff, stuff in enumerate(item):
+                print(f"transaction number {number_stuff + 1} :")
+                for greg, kurland in stuff.items():
+                    print("   ", greg, kurland)
+                print("------------")
 
     def run_one_step(self):
-        self.history.append(set())
+        self.history.append([])
         for product in self.product_list:
             self.run_one_step_for_single_product(product)
 
@@ -79,12 +82,15 @@ class UniformBudgetSimulation(Simulation):
                 buyers_dict.pop(buyer)
                 buyers_list.remove(buyer)
                 sellers_list.remove(seller)
-                for a_buyer, available_sellers in buyers_dict.items():
-                    available_sellers.remove(seller)
-                    if len(available_sellers) == 0:
-                        buyers_dict.pop(a_buyer)
-
-            buyers_list = buyers_dict.keys()
+                for a_buyer, available_sellers in list(buyers_dict.items()):
+                    try:
+                        available_sellers.remove(seller)
+                    except ValueError:
+                        pass
+            for a_buyer, available_sellers in list(buyers_dict.items()):
+                if len(available_sellers) == 0:
+                    buyers_dict.pop(a_buyer)
+            buyers_list = list(buyers_dict.keys())
 
     def create_transaction(self, seller, buyer, product):
         actual_price = seller.get_current_selling_price(product)
@@ -97,10 +103,10 @@ class UniformBudgetSimulation(Simulation):
             buyer.add_inventory(product, 1)
             seller.budget += actual_price
             buyer.budget -= actual_price
-            self.history[self.turn] = {'buyer': buyer.get_id(),
-                                       'seller': seller.get_id(),
-                                       'product': product,
-                                       'price': actual_price}
+            self.history[self.turn].append({'buyer': buyer.get_id(),
+                                            'seller': seller.get_id(),
+                                            'product': product,
+                                            'price': actual_price})
             return True
 
 
