@@ -63,6 +63,14 @@ class Player:
     def add_inventory(self, product, amount):
         self.products_in_inventory[-1][product] += amount
 
+    def update_history(self, history: list):
+        for record in history:
+            if record['buyer'] == self.id:
+                self.price_history['buying price'][record['product']].append(
+                    self.price_history['buying price'][record['product']][-1])
+            if record['buyer'] == self.id:
+                self.price_history['buying price'][record['product']].append(
+                    self.price_history['buying price'][record['product']][-1])
 
     def __repr__(self):
         to_print = f"{self.type} \nname: {self.id} \n"
@@ -101,6 +109,15 @@ class RationalPlayer(Player):
         super(RationalPlayer, self).__init__(id, _type, budget, products)
 
     def set_current_prices(self):
+        if 'seller' not in self.type:
+            self.set_buying_price()
+        if 'buyer' not in self.type:
+            self.set_selling_price()
+
+    def set_selling_price(self):
+        pass
+
+    def set_buying_price(self):
         pass
 
 

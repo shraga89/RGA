@@ -53,19 +53,15 @@ class UniformBudgetSimulation(Simulation):
         for t in range(self.horizon):
             self.run_one_step()
             self.turn += 1
-        for number, item in enumerate(self.history):
-            print(f"turn number {number + 1}")
-            print("-------------------------")
-            for number_stuff, stuff in enumerate(item):
-                print(f"transaction number {number_stuff + 1} :")
-                for greg, kurland in stuff.items():
-                    print("   ", greg, kurland)
-                print("------------")
+        self.print_end_result()
 
     def run_one_step(self):
         self.history.append([])
         for product in self.product_list:
             self.run_one_step_for_single_product(product)
+        for player in set(self.players['buyers'].values()).union(self.players['sellers'].values()):
+            player.update_history(self.history[-1])
+            player.set_current_prices()
 
     def run_one_step_for_single_product(self, product):
 
@@ -109,14 +105,15 @@ class UniformBudgetSimulation(Simulation):
                                             'price': actual_price})
             return True
 
-
-
-
-    def print_step_result(self):
-        pass
-
     def print_end_result(self):
-        pass
+        for number, item in enumerate(self.history):
+            print(f"turn number {number + 1}")
+            print("-------------------------")
+            for number_stuff, stuff in enumerate(item):
+                print(f"transaction number {number_stuff + 1} :")
+                for greg, kurland in stuff.items():
+                    print("   ", greg, kurland)
+                print("------------")
 
     def visualize(self):
         pass
