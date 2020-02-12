@@ -23,27 +23,13 @@ class Simulation:
 
 
 class UniformBudgetSimulation(Simulation):
-    def __init__(self, number_of_sellers, number_of_buyers, number_of_versatile_players, horizon, budget, product_list):
+    def __init__(self, horizon, product_list, players_dict):
         super(Simulation, self).__init__()
         self.history = pd.DataFrame(columns=['turn', 'buyer', 'seller', 'product', 'outcome',
                                              'actual_price', 'selling_price', 'buying_price'])
         self.turn = 1
         self.horizon = horizon
-        self.players = {'buyers': {},
-                        'sellers': {}}
-        for i in range(number_of_buyers):
-            player_id = 'buyer_' + str(i)
-            new_player = pl.ConstantPricePlayer(player_id, 'buyer', budget, product_list)
-            self.players['buyers'][player_id] = new_player
-        for i in range(number_of_sellers):
-            player_id = 'seller_' + str(i)
-            new_player = pl.ConstantPricePlayer(player_id, 'seller', budget, product_list)
-            self.players['sellers'][player_id] = new_player
-        for i in range(number_of_versatile_players):
-            player_id = 'versatile_' + str(i)
-            new_player = pl.ConstantPricePlayer(player_id, 'versatile', budget, product_list)
-            self.players['buyers'][player_id] = new_player
-            self.players['sellers'][player_id] = new_player
+        self.players = players_dict
         self.product_list = product_list
         self.create_inventory()
 
@@ -57,7 +43,7 @@ class UniformBudgetSimulation(Simulation):
             self.run_one_step()
             self.print_end_result(True, None, self.turn)
             self.turn += 1
-        self.print_end_result(True, 'sim.csv', None)
+        self.print_end_result(False, 'sim.csv', None)
 
     def run_one_step(self):
         for product in self.product_list:
@@ -134,7 +120,7 @@ class UniformBudgetSimulation(Simulation):
     def print_end_result(self, success_only=True, export=None, turn=None):
         print_df = self.history.copy()
         if turn:
-            print(f"turn number {turn + 1}")
+            print(f"turn number {turn}")
             print("-------------------------")
             print_df = print_df[print_df['turn'] == turn]
         else:
@@ -142,7 +128,7 @@ class UniformBudgetSimulation(Simulation):
             print("-------------------------")
         if success_only:
             print_df = print_df[print_df['outcome'] == 'successful']
-        print(print_df.to_string())
+        print(print_df.to_string() if len(print_df) > 0 else '')
         if export:
             print_df.to_csv(export)
 

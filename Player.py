@@ -8,9 +8,10 @@ class Player:
     def __init__(self, id, _type, budget, products, setting_initial_prices='random'):
         self.id = id
         self.type = _type
-        self.price_limits = {'buying_price': {}, 'selling_price': {}}
+        self.price_limits = {} # key is tuple (product, selling\buying price)
         self.price_history = pd.DataFrame(columns=['turn', 'buyer', 'seller', 'product', 'outcome',
                                                    'actual_price', 'selling_price', 'buying_price'])
+        self.current_prices = {} # key is tuple (product, selling\buying price)
         self.budget = budget
         self.all_existing_products = products
         self.products_in_inventory = [{p: 0 for p in products}, ]
@@ -25,39 +26,39 @@ class Player:
 
     def set_random_initial_prices(self, product):
         if 'buyer' not in self.type:
-            self.price_limits['selling_price'][product] = random.randint(MINIMAL_SELLING_PRICE, MAXIMAL_SELLING_PRICE)
+            self.price_limits[(product, 'selling_price')] = random.randint(MINIMAL_SELLING_PRICE, MAXIMAL_SELLING_PRICE)
             # self.price_history['selling_price'][product] = [
             #     random.randint(self.price_limits['selling_price'][product], MAXIMAL_SELLING_PRICE), ]
             # self.price_history['buying_price'][product] = [MINIMAL_BUYING_PRICE - 1, ]
+            current_price = random.randint(self.price_limits[(product, 'selling_price')], MAXIMAL_SELLING_PRICE)
+            self.current_prices[(product, 'selling_price')] = current_price
             self.price_history = self.price_history.append({'turn': 0,
                                                             'buyer': None,
                                                             'seller': self.id,
                                                             'product': product,
                                                             'outcome': 'initial',
                                                             'actual_price': None,
-                                                            'selling_price': random.randint(
-                                                                self.price_limits['selling_price'][product],
-                                                                MAXIMAL_SELLING_PRICE),
+                                                            'selling_price': current_price,
                                                             'buying_price': MINIMAL_BUYING_PRICE - 1},
                                                            ignore_index=True)
-            self.price_limits['buying_price'][product] = MINIMAL_BUYING_PRICE - 1
+            self.price_limits[(product, 'buying_price')] = MINIMAL_BUYING_PRICE - 1
         if 'seller' not in self.type:
-            self.price_limits['buying_price'][product] = random.randint(MINIMAL_BUYING_PRICE, MAXIMAL_BUYING_PRICE)
+            self.price_limits[(product, 'buying_price')] = random.randint(MINIMAL_BUYING_PRICE, MAXIMAL_BUYING_PRICE)
             # self.price_history['buying_price'][product] = [
             #     random.randint(self.price_limits['buying_price'][product], MAXIMAL_BUYING_PRICE), ]
             # self.price_history['selling_price'][product] = [MAXIMAL_BUYING_PRICE + 1, ]
+            current_price = random.randint(MINIMAL_BUYING_PRICE, self.price_limits[(product, 'buying_price')])
+            self.current_prices[(product, 'buying_price')] = current_price
             self.price_history = self.price_history.append({'turn': 0,
                                                             'buyer': self.id,
                                                             'seller': None,
                                                             'product': product,
                                                             'outcome': 'initial',
                                                             'actual_price': None,
-                                                            'selling_price': random.randint(
-                                                                self.price_limits['buying_price'][product],
-                                                                MAXIMAL_BUYING_PRICE),
-                                                            'buying_price': MAXIMAL_BUYING_PRICE - 1},
+                                                            'selling_price': MAXIMAL_BUYING_PRICE + 1,
+                                                            'buying_price': current_price},
                                                            ignore_index=True)
-            self.price_limits['selling_price'][product] = MAXIMAL_BUYING_PRICE + 1
+            self.price_limits[(product, 'selling_price')] = MAXIMAL_BUYING_PRICE + 1
 
     def get_prices_by_time(self, timestamp=0):
         buying_price = dict()
@@ -87,10 +88,10 @@ class Player:
         return {'buying_price': buying_prices, 'selling_price': selling_prices}
 
     def get_current_selling_price(self, product):
-        return self.get_price_history_by_product(product)['selling_price'][-1]
+        return self.current_prices[(product, 'selling_price')]
 
     def get_current_buying_price(self, product):
-        return self.get_price_history_by_product(product)['buying_price'][-1]
+        return self.current_prices[(product, 'buying_price')]
 
     def get_id(self):
         return self.id
@@ -130,11 +131,11 @@ class Player:
             if 'seller' not in self.type:
                 to_print += f'  will not sell {product} \n'
             else:
-                to_print += f"  will sell {product} for at least {self.price_limits['selling_price'][product]}$ \n"
+                to_print += f"  will sell {product} for at least {self.price_limits[(product, 'selling_price')]}$ \n"
             if 'buyer' not in self.type:
                 to_print += f'  will not buy {product} \n'
             else:
-                to_print += f"  will buy {product} for at most {self.price_limits['buying_price'][product]}$ \n"
+                to_print += f"  will buy {product} for at most {self.price_limits[(product, 'buying_price')]}$ \n"
         return to_print
 
     def has_product_available(self, product):
@@ -159,17 +160,38 @@ class RationalPlayer(Player):
     Player that behaves exactly like in the video
     """
 
-    def __init__(self, id, _type, budget, products):
+    def __init__(self, id, _type, budget, products, price_step = 1):
         super(RationalPlayer, self).__init__(id, _type, budget, products)
+        self.price_step = price_step
 
     def set_current_prices(self):
         if 'seller' not in self.type:
-            self.set_buying_price()
+            for product in self.all_existing_products:
+                self.set_buying_price(product)
         if 'buyer' not in self.type:
-            self.set_selling_price()
+            for product in self.all_existing_products:
+                self.set_selling_price(product)
 
-    def set_selling_price(self):
-        last_price = self.get_current_selling_price()
+    def set_selling_price(self, product, is_versatile=False):
+        last_price = self.get_current_selling_price(product)
+        is_transaction_last_turn = 'successful' in self.price_history[
+            (self.price_history['turn'] == self.price_history['turn'].max()) &
+            (self.price_history['product'] == product)]['outcome'].tolist()
+        possible_to_increase = last_price + self.price_step <= MAXIMAL_SELLING_PRICE
+        possible_to_decrease = last_price - self.price_step >= self.price_limits[(product, 'selling_price')]
+        if is_transaction_last_turn and possible_to_increase:
+            self.current_prices[(product, 'selling_price')] += self.price_step
+        elif possible_to_decrease:
+            self.current_prices[(product, 'selling_price')] -= self.price_step
 
-    def set_buying_price(self):
-        pass
+    def set_buying_price(self, product, is_versatile=False):
+        last_price = self.get_current_buying_price(product)
+        is_transaction_last_turn = 'successful' in self.price_history[
+            (self.price_history['turn'] == self.price_history['turn'].max()) &
+            (self.price_history['product'] == product)]['outcome'].tolist()
+        possible_to_increase = last_price + self.price_step <= self.price_limits[(product, 'buying_price')]
+        possible_to_decrease = last_price - self.price_step >= MINIMAL_BUYING_PRICE
+        if is_transaction_last_turn and possible_to_decrease:
+            self.current_prices[(product, 'buying_price')] -= self.price_step
+        elif possible_to_increase:
+            self.current_prices[(product, 'buying_price')] += self.price_step

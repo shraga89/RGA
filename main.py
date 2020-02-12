@@ -8,7 +8,12 @@ def main():
     # players = generate_players()
     # for player in players.values():
     #     print(player)
-    my_sim = Simulation.UniformBudgetSimulation(2, 3, 0, 10, 200, ["cocaine"])
+    my_players = generate_players(pl.RationalPlayer, SELLERS_NUMBER,
+                                  BUYERS_NUMBER, VERSATILES_NUMBER, 2000, PRODUCTS_LIST)
+    for player in my_players.values():
+        print(player)
+        print('----')
+    my_sim = Simulation.UniformBudgetSimulation(TIME_HORIZON, PRODUCTS_LIST, my_players)
     my_sim.run_simulation()
 
 
