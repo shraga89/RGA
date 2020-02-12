@@ -55,8 +55,9 @@ class UniformBudgetSimulation(Simulation):
     def run_simulation(self):
         for t in range(self.horizon):
             self.run_one_step()
+            self.print_end_result(True, None, self.turn)
             self.turn += 1
-        self.print_end_result()
+        self.print_end_result(True, 'sim.csv', None)
 
     def run_one_step(self):
         for product in self.product_list:
@@ -130,8 +131,21 @@ class UniformBudgetSimulation(Simulation):
                                                ignore_index=True)
             return True
 
-    def print_end_result(self):
-        print(self.history.to_string())
+    def print_end_result(self, success_only=True, export=None, turn=None):
+        print_df = self.history.copy()
+        if turn:
+            print(f"turn number {turn + 1}")
+            print("-------------------------")
+            print_df = print_df[print_df['turn'] == turn]
+        else:
+            print(f"full horizon")
+            print("-------------------------")
+        if success_only:
+            print_df = print_df[print_df['outcome'] == 'successful']
+        print(print_df.to_string())
+        if export:
+            print_df.to_csv(export)
+
         # for number, item in enumerate(self.history):
         #     print(f"turn number {number + 1}")
         #     print("-------------------------")
