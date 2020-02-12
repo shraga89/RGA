@@ -5,6 +5,8 @@ from abc import abstractmethod
 import random
 import copy
 import itertools as itt
+import pandas as pd
+import numpy as np
 
 
 class Simulation:
@@ -23,8 +25,9 @@ class Simulation:
 class UniformBudgetSimulation(Simulation):
     def __init__(self, number_of_sellers, number_of_buyers, number_of_versatile_players, horizon, budget, product_list):
         super(Simulation, self).__init__()
-        self.history = []
-        self.turn = 0
+        self.history = pd.DataFrame(columns=['turn', 'buyer', 'seller', 'product', 'outcome',
+                                             'actual_price', 'selling_price', 'buying_price'])
+        self.turn = 1
         self.horizon = horizon
         self.players = {'buyers': {},
                         'sellers': {}}
@@ -56,11 +59,10 @@ class UniformBudgetSimulation(Simulation):
         self.print_end_result()
 
     def run_one_step(self):
-        self.history.append([])
         for product in self.product_list:
             self.run_one_step_for_single_product(product)
         for player in set(self.players['buyers'].values()).union(self.players['sellers'].values()):
-            player.update_history(self.history[-1])
+            player.update_history(self.history[self.history['turn'] == self.turn])
             player.set_current_prices()
 
     def run_one_step_for_single_product(self, product):
@@ -91,29 +93,53 @@ class UniformBudgetSimulation(Simulation):
     def create_transaction(self, seller, buyer, product):
         actual_price = seller.get_current_selling_price(product)
         if actual_price > buyer.get_current_buying_price(product):
+            self.history = self.history.append({'turn': self.turn,
+                                                'buyer': buyer.get_id(),
+                                                'seller': seller.get_id(),
+                                                'product': product,
+                                                'outcome': 'unsuccessful',
+                                                'actual_price': None,
+                                                'selling_price': seller.get_current_selling_price(product),
+                                                'buying_price': buyer.get_current_buying_price(product)},
+                                               ignore_index=True)
             return False
-        if actual_price > buyer.budget:
+        elif actual_price > buyer.budget:
+            self.history = self.history.append({'turn': self.turn,
+                                                'buyer': buyer.get_id(),
+                                                'seller': seller.get_id(),
+                                                'product': product,
+                                                'outcome': 'no budget',
+                                                'actual_price': None,
+                                                'selling_price': seller.get_current_selling_price(product),
+                                                'buying_price': buyer.get_current_buying_price(product)},
+                                               ignore_index=True)
             return False
         else:
             seller.add_inventory(product, -1)
             buyer.add_inventory(product, 1)
             seller.budget += actual_price
             buyer.budget -= actual_price
-            self.history[self.turn].append({'buyer': buyer.get_id(),
-                                            'seller': seller.get_id(),
-                                            'product': product,
-                                            'price': actual_price})
+            self.history = self.history.append({'turn': self.turn,
+                                                'buyer': buyer.get_id(),
+                                                'seller': seller.get_id(),
+                                                'product': product,
+                                                'outcome': 'successful',
+                                                'actual_price': actual_price,
+                                                'selling_price': seller.get_current_selling_price(product),
+                                                'buying_price': buyer.get_current_buying_price(product)},
+                                               ignore_index=True)
             return True
 
     def print_end_result(self):
-        for number, item in enumerate(self.history):
-            print(f"turn number {number + 1}")
-            print("-------------------------")
-            for number_stuff, stuff in enumerate(item):
-                print(f"transaction number {number_stuff + 1} :")
-                for greg, kurland in stuff.items():
-                    print("   ", greg, kurland)
-                print("------------")
+        print(self.history.to_string())
+        # for number, item in enumerate(self.history):
+        #     print(f"turn number {number + 1}")
+        #     print("-------------------------")
+        #     for number_stuff, stuff in enumerate(item):
+        #         print(f"transaction number {number_stuff + 1} :")
+        #         for greg, kurland in stuff.items():
+        #             print("   ", greg, kurland)
+        #         print("------------")
 
     def visualize(self):
         pass
