@@ -18,7 +18,7 @@ class Player:
         for p in products:
             self.set_initial_prices(p, setting_initial_prices)
 
-    def set_initial_prices(self, product, method):
+    def set_initial_prices(self, product, method = 'random'):
         if method == "random":
             return self.set_random_initial_prices(product)
         else:
@@ -195,3 +195,41 @@ class RationalPlayer(Player):
             self.current_prices[(product, 'buying_price')] -= self.price_step
         elif possible_to_increase:
             self.current_prices[(product, 'buying_price')] += self.price_step
+
+
+class ProductionConsumptionPlayer(Player):
+
+    def __init__(self, id, _type, budget, products, initial_production_price: dict, initial_consumption_utility: dict):
+        super().__init__(id, _type, budget, products)
+        # TODO: UPDATE price_history
+        self.price_history = pd.DataFrame(columns=['turn', 'buyer', 'seller', 'product', 'outcome',
+                                                   'actual_price', 'selling_price', 'buying_price'])
+        for p in products:
+            self.set_initial_prices(p)
+        self.production_prices = []
+        self.consumption_utilities = []
+        if 'seller' not in self.type:
+            self.production_prices.append(initial_production_price)
+        if 'buyer' not in self.type:
+            self.consumption_utilities.append(initial_consumption_utility)
+
+    def set_initial_prices(self, product, method = 'random'):
+        self.set_random_initial_prices(product)
+
+    @abstractmethod
+    def produce_inventory(self, product):
+        pass
+        # self.products_in_inventory[-1][product] += amount
+
+
+class NaiveProductionConsumptionPlayer(ProductionConsumptionPlayer):
+
+    def __init__(self, id, _type, budget, products, initial_production_price: dict, initial_consumption_utility: dict):
+        super().__init__(id, _type, budget, products, initial_production_price, initial_consumption_utility)
+
+    def produce_inventory(self, product):
+        self.products_in_inventory[product].append(self.products_in_inventory[-1][product])
+        if random.random() > 0.5 and self.budget > self.production_prices[-1]:
+            self.products_in_inventory[-1][product] += 1
+            self.budget -= self.products_in_inventory[-1][product]
+
