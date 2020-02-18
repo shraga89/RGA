@@ -5,7 +5,7 @@ from typing import Dict
 class AbstractUtility:
     utility_stats: Dict[int, list] = dict()  # class shared object for later on possible statistics
 
-    #TODO: maybe make the generic tradeoff even more generic
+    # TODO: maybe make the generic tradeoff even more generic
     def __init__(self, generic_tradeoff_ratio):
         self.generic_tradeoff_ratio = generic_tradeoff_ratio
 
@@ -14,7 +14,7 @@ class AbstractUtility:
         pass
 
     @abstractmethod
-    def calculate_seller_utility(self, budget):#TODO: maybe make it return budget - discuss further functionality
+    def calculate_seller_utility(self, budget):  # TODO: maybe make it return budget - discuss further functionality
         pass
 
     def calculate_total_utility(self, turn, player_value_for_products: dict, cost_of_product: dict,
@@ -34,7 +34,6 @@ class AbstractUtility:
 
 
 class SimpleUtility(AbstractUtility):
-
     """
     Class defines utility as the sum of product values to the player minus the total products cost.
     In addition, we add the current seller budget that player has
@@ -51,24 +50,25 @@ class SimpleUtility(AbstractUtility):
 
 
 class LeverageUtility(AbstractUtility):
-
     """
     Class defines utility of buyer as the sum of product values to the player minus the total products cost.
     Product values are also a function of the number of player that own the products.
     In addition, we add the current seller budget that player has
     """
-    current_product_owners = dict() # class shared object for knowing the possession of products
+    current_product_owners = dict()  # class shared object for knowing the possession of products
 
-    def __init__(self, generic_tradeoff_ratio,number_of_players):
+    def __init__(self, generic_tradeoff_ratio, number_of_players):
         super(LeverageUtility, self).__init__(generic_tradeoff_ratio)
         self.number_of_players = number_of_players
 
-    def real_value_of_player(self,player_raw_value,product):
-        number_of_owners=len(self.current_product_owners[product])
-        return player_raw_value*((self.number_of_players-number_of_owners)/self.number_of_players)
+    def real_value_of_player(self, player_raw_value, product):
+        number_of_owners = len(self.current_product_owners[product])
+        return player_raw_value * ((self.number_of_players - number_of_owners) / self.number_of_players)
 
     def calculate_buyer_utility(self, player_value_for_products: dict, cost_of_product: dict, owned_products: list):
-        return sum([self.real_value_of_player(player_value_for_products[product], product) - cost_of_product[product] for product in owned_products])
+        return sum(
+            [self.real_value_of_player(player_value_for_products[product], product) - cost_of_product[product] for
+             product in owned_products])
 
     def calculate_seller_utility(self, budget):
         return budget
