@@ -26,7 +26,7 @@ class Simulation:
 
     def print_end_result(self, success_only=True, export=None, turn=None):
         print_df = self.history.copy()
-        if turn:
+        if type(turn) == int:
             print(f"turn number {turn}")
             print("-------------------------")
             print_df = print_df[print_df['turn'] == turn]
@@ -136,17 +136,19 @@ class NaiveSimulation(Simulation):
         pass
 
 
-class ProductionConsumptionSimulation(Simulation):
-    def __init__(self, horizon, product_list, players_dict):
+class DataMarketSimulation(Simulation):
+
+    def __init__(self, horizon, product_list, players_dict, contract):
         super().__init__(horizon, product_list, players_dict)
         self.history = pd.DataFrame(columns=['turn', 'buyer', 'seller', 'product', 'outcome',
                                              'actual_price', 'selling_price', 'buying_price'])
         self.turn = 0
+        self.contract = contract
 
     def create_inventory(self):
         for seller in self.players['sellers'].values():
-            for product in self.product_list:
-                seller.produce_inventory(product)
+            for product in seller.relevant_products:
+                seller.gather_data(product)
 
     def run_simulation(self):
         for t in range(self.horizon):
@@ -166,8 +168,9 @@ class ProductionConsumptionSimulation(Simulation):
     def run_one_step_for_single_product(self, product):
 
         sellers_list = [seller_id for seller_id, seller in self.players['sellers'].items()
-                        if seller.has_product_available(product)]
-        buyers_list = list(buyer_id for buyer_id in self.players['buyers'].keys())
+                        if seller.is_product_relevant(product)]
+        buyers_list = [buyer_id for buyer_id, buyer in self.players['buyers'].items()
+                       if buyer.is_product_relevant(product)]
         buyers_dict = {buyer: sellers_list.copy() for buyer in buyers_list}
 
         while buyers_list:
@@ -177,56 +180,35 @@ class ProductionConsumptionSimulation(Simulation):
             if self.create_transaction(self.players['sellers'][seller], self.players['buyers'][buyer], product):
                 buyers_dict.pop(buyer)
                 buyers_list.remove(buyer)
-                sellers_list.remove(seller)
-                for a_buyer, available_sellers in list(buyers_dict.items()):
-                    try:
-                        available_sellers.remove(seller)
-                    except ValueError:
-                        pass
             for a_buyer, available_sellers in list(buyers_dict.items()):
                 if len(available_sellers) == 0:
                     buyers_dict.pop(a_buyer)
             buyers_list = list(buyers_dict.keys())
 
     def create_transaction(self, seller, buyer, product):
-        actual_price = seller.get_current_selling_price(product)
-        if actual_price > buyer.get_current_buying_price(product):
+        outcome, info = self.contract.check_prerequisites([seller, buyer], product)
+        if not outcome:
             self.history = self.history.append({'turn': self.turn,
                                                 'buyer': buyer.get_id(),
                                                 'seller': seller.get_id(),
                                                 'product': product,
-                                                'outcome': 'unsuccessful',
+                                                'outcome': info,
                                                 'actual_price': None,
                                                 'selling_price': seller.get_current_selling_price(product),
                                                 'buying_price': buyer.get_current_buying_price(product)},
                                                ignore_index=True)
-            return False
-        elif actual_price > buyer.budget:
-            self.history = self.history.append({'turn': self.turn,
-                                                'buyer': buyer.get_id(),
-                                                'seller': seller.get_id(),
-                                                'product': product,
-                                                'outcome': 'no budget',
-                                                'actual_price': None,
-                                                'selling_price': seller.get_current_selling_price(product),
-                                                'buying_price': buyer.get_current_buying_price(product)},
-                                               ignore_index=True)
-            return False
         else:
-            seller.add_inventory(product, -1)
-            buyer.add_inventory(product, 1)
-            seller.budget += actual_price
-            buyer.budget -= actual_price
+            actual_price = self.contract.enact_contact([seller, buyer], product)
             self.history = self.history.append({'turn': self.turn,
                                                 'buyer': buyer.get_id(),
                                                 'seller': seller.get_id(),
                                                 'product': product,
-                                                'outcome': 'successful',
+                                                'outcome': info,
                                                 'actual_price': actual_price,
                                                 'selling_price': seller.get_current_selling_price(product),
                                                 'buying_price': buyer.get_current_buying_price(product)},
                                                ignore_index=True)
-            return True
+        return outcome
 
     def visualize(self):
         pass

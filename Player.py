@@ -197,9 +197,9 @@ class RationalPlayer(Player):
             self.current_prices[(product, 'buying_price')] += self.price_step
 
 
-class ProductionConsumptionPlayer(Player):
+class DataPlayer(Player):
 
-    def __init__(self, id, _type, budget, products, initial_production_price: dict, initial_consumption_utility: dict):
+    def __init__(self, id, _type, budget, products, relevant_products):
         super().__init__(id, _type, budget, products)
         # TODO: UPDATE price_history
         self.price_history = pd.DataFrame(columns=['turn', 'buyer', 'seller', 'product', 'outcome',
@@ -208,28 +208,83 @@ class ProductionConsumptionPlayer(Player):
             self.set_initial_prices(p)
         self.production_prices = []
         self.consumption_utilities = []
-        if 'seller' not in self.type:
-            self.production_prices.append(initial_production_price)
-        if 'buyer' not in self.type:
-            self.consumption_utilities.append(initial_consumption_utility)
+        self.relevant_products = relevant_products
 
-    def set_initial_prices(self, product, method = 'random'):
+    def set_initial_prices(self, product, method='random'):
         self.set_random_initial_prices(product)
 
     @abstractmethod
-    def produce_inventory(self, product):
+    def set_buying_price(self, product):
         pass
-        # self.products_in_inventory[-1][product] += amount
+
+    @abstractmethod
+    def set_selling_price(self, product):
+        pass
+
+    def set_current_prices(self):
+        if 'seller' not in self.type:
+            for product in self.all_existing_products:
+                self.set_buying_price(product)
+        if 'buyer' not in self.type:
+            for product in self.all_existing_products:
+                self.set_selling_price(product)
 
 
-class NaiveProductionConsumptionPlayer(ProductionConsumptionPlayer):
+class DataProvider(DataPlayer):
 
-    def __init__(self, id, _type, budget, products, initial_production_price: dict, initial_consumption_utility: dict):
-        super().__init__(id, _type, budget, products, initial_production_price, initial_consumption_utility)
+    def __init__(self, id, budget, products, relevant_products, initial_production_price: dict):
+        super().__init__(id, 'seller', budget, products, relevant_products)
+        self.production_prices.append(initial_production_price)
 
-    def produce_inventory(self, product):
-        self.products_in_inventory[product].append(self.products_in_inventory[-1][product])
-        if random.random() > 0.5 and self.budget > self.production_prices[-1]:
-            self.products_in_inventory[-1][product] += 1
-            self.budget -= self.products_in_inventory[-1][product]
+    def gather_data(self, product):
+        gathering_price = self.production_prices[-1][product]
+        product_in_inventory = self.products_in_inventory[-1][product] == 1
+        if random.random() > 0.0 and self.budget >= gathering_price and not product_in_inventory:
+            self.products_in_inventory[-1][product] = 1
+            self.budget -= gathering_price
+
+    def is_product_relevant(self, product):
+        return product in self.relevant_products and self.products_in_inventory[-1][product] == 1
+
+    def set_buying_price(self, product):
+        pass
+
+    def set_selling_price(self, product, price_step=1):
+        last_price = self.get_current_selling_price(product)
+        is_transaction_last_turn = 'successful' in self.price_history[
+            (self.price_history['turn'] == self.price_history['turn'].max()) &
+            (self.price_history['product'] == product)]['outcome'].tolist()
+        possible_to_increase = last_price + price_step <= MAXIMAL_SELLING_PRICE
+        possible_to_decrease = last_price - price_step >= self.price_limits[(product, 'selling_price')]
+        if is_transaction_last_turn and possible_to_increase:
+            self.current_prices[(product, 'selling_price')] += price_step
+        elif possible_to_decrease:
+            self.current_prices[(product, 'selling_price')] -= price_step
+
+
+class DataConsumer(DataPlayer):
+
+    def __init__(self, id, budget, products, relevant_products, initial_consumption_utility: dict):
+        super().__init__(id, 'buyer', budget, products, relevant_products)
+        self.consumption_utilities.append(initial_consumption_utility)
+
+    def is_product_relevant(self, product):
+        return product in self.relevant_products and self.budget >= self.get_current_buying_price(product) \
+               and self.products_in_inventory[-1][product] == 0
+
+    def set_buying_price(self, product, price_step=1):
+        last_price = self.get_current_buying_price(product)
+        is_transaction_last_turn = 'successful' in self.price_history[
+            (self.price_history['turn'] == self.price_history['turn'].max()) &
+            (self.price_history['product'] == product)]['outcome'].tolist()
+        possible_to_increase = last_price + price_step <= self.price_limits[(product, 'buying_price')]
+        possible_to_decrease = last_price - price_step >= MINIMAL_BUYING_PRICE
+        if is_transaction_last_turn and possible_to_decrease:
+            self.current_prices[(product, 'buying_price')] -= price_step
+        elif possible_to_increase:
+            self.current_prices[(product, 'buying_price')] += price_step
+
+    def set_selling_price(self, product):
+        pass
+
 

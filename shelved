@@ -1,0 +1,131 @@
+# class ProductionConsumptionPlayer(Player):
+#
+#     def __init__(self, id, _type, budget, products, initial_production_price: dict, initial_consumption_utility: dict):
+#         super().__init__(id, _type, budget, products)
+#         # TODO: UPDATE price_history
+#         self.price_history = pd.DataFrame(columns=['turn', 'buyer', 'seller', 'product', 'outcome',
+#                                                    'actual_price', 'selling_price', 'buying_price'])
+#         for p in products:
+#             self.set_initial_prices(p)
+#         self.production_prices = []
+#         self.consumption_utilities = []
+#         if 'seller' not in self.type:
+#             self.production_prices.append(initial_production_price)
+#         if 'buyer' not in self.type:
+#             self.consumption_utilities.append(initial_consumption_utility)
+#
+#     def set_initial_prices(self, product, method = 'random'):
+#         self.set_random_initial_prices(product)
+#
+#     @abstractmethod
+#     def produce_inventory(self, product):
+#         pass
+#         # self.products_in_inventory[-1][product] += amount
+#
+#
+# class NaiveProductionConsumptionPlayer(ProductionConsumptionPlayer):
+#
+#     def __init__(self, id, _type, budget, products, initial_production_price: dict, initial_consumption_utility: dict):
+#         super().__init__(id, _type, budget, products, initial_production_price, initial_consumption_utility)
+#
+#     def produce_inventory(self, product):
+#         self.products_in_inventory[product].append(self.products_in_inventory[-1][product])
+#         if random.random() > 0.5 and self.budget > self.production_prices[-1]:
+#             self.products_in_inventory[-1][product] += 1
+#             self.budget -= self.products_in_inventory[-1][product]
+
+
+# class ProductionConsumptionSimulation(Simulation):
+#     def __init__(self, horizon, product_list, players_dict):
+#         super().__init__(horizon, product_list, players_dict)
+#         self.history = pd.DataFrame(columns=['turn', 'buyer', 'seller', 'product', 'outcome',
+#                                              'actual_price', 'selling_price', 'buying_price'])
+#         self.turn = 0
+#
+#     def create_inventory(self):
+#         for seller in self.players['sellers'].values():
+#             for product in self.product_list:
+#                 seller.produce_inventory(product)
+#
+#     def run_simulation(self):
+#         for t in range(self.horizon):
+#             self.run_one_step()
+#             self.print_end_result(True, None, self.turn)
+#             self.turn += 1
+#         self.print_end_result(False, 'sim.csv', None)
+#
+#     def run_one_step(self):
+#         self.create_inventory()
+#         for product in self.product_list:
+#             self.run_one_step_for_single_product(product)
+#         for player in set(self.players['buyers'].values()).union(self.players['sellers'].values()):
+#             player.update_history(self.history[self.history['turn'] == self.turn])
+#             player.set_current_prices()
+#
+#     def run_one_step_for_single_product(self, product):
+#
+#         sellers_list = [seller_id for seller_id, seller in self.players['sellers'].items()
+#                         if seller.has_product_available(product)]
+#         buyers_list = list(buyer_id for buyer_id in self.players['buyers'].keys())
+#         buyers_dict = {buyer: sellers_list.copy() for buyer in buyers_list}
+#
+#         while buyers_list:
+#             buyer = random.sample(buyers_list, 1)[0]
+#             random.shuffle(buyers_dict[buyer])
+#             seller = buyers_dict[buyer].pop()
+#             if self.create_transaction(self.players['sellers'][seller], self.players['buyers'][buyer], product):
+#                 buyers_dict.pop(buyer)
+#                 buyers_list.remove(buyer)
+#                 sellers_list.remove(seller)
+#                 for a_buyer, available_sellers in list(buyers_dict.items()):
+#                     try:
+#                         available_sellers.remove(seller)
+#                     except ValueError:
+#                         pass
+#             for a_buyer, available_sellers in list(buyers_dict.items()):
+#                 if len(available_sellers) == 0:
+#                     buyers_dict.pop(a_buyer)
+#             buyers_list = list(buyers_dict.keys())
+#
+#     def create_transaction(self, seller, buyer, product):
+#         actual_price = seller.get_current_selling_price(product)
+#         if actual_price > buyer.get_current_buying_price(product):
+#             self.history = self.history.append({'turn': self.turn,
+#                                                 'buyer': buyer.get_id(),
+#                                                 'seller': seller.get_id(),
+#                                                 'product': product,
+#                                                 'outcome': 'unsuccessful',
+#                                                 'actual_price': None,
+#                                                 'selling_price': seller.get_current_selling_price(product),
+#                                                 'buying_price': buyer.get_current_buying_price(product)},
+#                                                ignore_index=True)
+#             return False
+#         elif actual_price > buyer.budget:
+#             self.history = self.history.append({'turn': self.turn,
+#                                                 'buyer': buyer.get_id(),
+#                                                 'seller': seller.get_id(),
+#                                                 'product': product,
+#                                                 'outcome': 'no budget',
+#                                                 'actual_price': None,
+#                                                 'selling_price': seller.get_current_selling_price(product),
+#                                                 'buying_price': buyer.get_current_buying_price(product)},
+#                                                ignore_index=True)
+#             return False
+#         else:
+#             seller.add_inventory(product, -1)
+#             buyer.add_inventory(product, 1)
+#             seller.budget += actual_price
+#             buyer.budget -= actual_price
+#             self.history = self.history.append({'turn': self.turn,
+#                                                 'buyer': buyer.get_id(),
+#                                                 'seller': seller.get_id(),
+#                                                 'product': product,
+#                                                 'outcome': 'successful',
+#                                                 'actual_price': actual_price,
+#                                                 'selling_price': seller.get_current_selling_price(product),
+#                                                 'buying_price': buyer.get_current_buying_price(product)},
+#                                                ignore_index=True)
+#             return True
+#
+#     def visualize(self):
+#         pass
