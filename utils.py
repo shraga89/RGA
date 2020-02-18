@@ -1,6 +1,7 @@
 from config import *
 import Player as pl
 import random
+import Product as pr
 
 
 def set_initial_production_price(products, constant_production_price):
@@ -67,3 +68,18 @@ def generate_data_players(number_of_buyers, number_of_sellers, minimal_buying_bu
         new_player = pl.DataProvider(player_id, budget, product_list, relevant_products, initial_production_price)
         players['sellers'][player_id] = new_player
     return players
+
+
+def generate_data_products(number_of_products, minimal_number_of_examples,
+                           maxmal_number_of_examples, minimal_number_of_features,
+                           maxmal_number_of_features):
+    product_list = []
+    for p in range(number_of_products):
+        product_name = 'product_' + str(p)
+        domain = 'general'
+        number_of_examples = random.randint(minimal_number_of_examples, maxmal_number_of_examples)
+        number_of_features = random.randint(minimal_number_of_features, maxmal_number_of_features)
+        additional_features = None
+        new_product = pr.DataProduct(product_name, domain, number_of_examples, number_of_features, additional_features)
+        product_list.append(new_product)
+    return product_list
