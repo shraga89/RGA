@@ -7,7 +7,7 @@ import copy
 import itertools as itt
 import pandas as pd
 import numpy as np
-
+from Utility import DataPlayerUtility
 
 class Simulation:
     def __init__(self, horizon, product_list, players_dict):
@@ -82,6 +82,8 @@ class NaiveSimulation(Simulation):
                 buyers_dict.pop(buyer)
                 buyers_list.remove(buyer)
                 sellers_list.remove(seller)
+                self.players['buyers'][buyer].utility.update_product_owners(product,self.players['buyers'][buyer])
+                
                 for a_buyer, available_sellers in list(buyers_dict.items()):
                     try:
                         available_sellers.remove(seller)
@@ -180,6 +182,7 @@ class DataMarketSimulation(Simulation):
             if self.create_transaction(self.players['sellers'][seller], self.players['buyers'][buyer], product):
                 buyers_dict.pop(buyer)
                 buyers_list.remove(buyer)
+
             for a_buyer, available_sellers in list(buyers_dict.items()):
                 if len(available_sellers) == 0:
                     buyers_dict.pop(a_buyer)
