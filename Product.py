@@ -14,3 +14,7 @@ class DataProduct(Product):
 
     def __eq__(self, other):
         return self.name == other.name and self.domain == other.domain
+
+
+    def __str__(self):
+        return self.name+" - "+self.domain

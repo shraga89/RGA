@@ -1,7 +1,7 @@
-from config import *
 import Player as pl
 import random
 import Product as pr
+from Utility import DataPlayerUtility
 
 
 def set_initial_production_price(products, constant_production_price):
@@ -54,18 +54,22 @@ def generate_data_players(number_of_buyers, number_of_sellers, minimal_buying_bu
                           product_list):
     players = {'buyers': {}, 'sellers': {}}
     for i in range(number_of_buyers):
+        utility = DataPlayerUtility(number_of_buyers)
         player_id = 'buyer_' + str(i)
         budget = generate_random_budget(minimal_buying_budget, maximal_buying_budget)
         initial_consumption_utility = set_initial_consumption_utility(product_list, constant_consumption_utility)
         relevant_products = random.sample(product_list, number_of_products_per_buyer)
-        new_player = pl.DataConsumer(player_id, budget, product_list, relevant_products, initial_consumption_utility)
+        new_player = pl.DataConsumer(player_id, budget, product_list, relevant_products, initial_consumption_utility,
+                                     utility)
         players['buyers'][player_id] = new_player
     for i in range(number_of_sellers):
+        utility = DataPlayerUtility(number_of_sellers)
         player_id = 'seller_' + str(i)
         budget = generate_random_budget(minimal_selling_budget, maximal_selling_budget)
         initial_production_price = set_initial_production_price(product_list, constant_production_price)
         relevant_products = random.sample(product_list, number_of_products_per_seller)
-        new_player = pl.DataProvider(player_id, budget, product_list, relevant_products, initial_production_price)
+        new_player = pl.DataProvider(player_id, budget, product_list, relevant_products, initial_production_price,
+                                     utility)
         players['sellers'][player_id] = new_player
     return players
 
