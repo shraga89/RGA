@@ -238,6 +238,7 @@ class DataProvider(DataPlayer):
     def __init__(self, id, budget, products, relevant_products, initial_production_price: dict, utility):
         super().__init__(id, 'seller', budget, products, relevant_products, utility)
         self.production_prices.append(initial_production_price)
+        self.utility_history = {"algorithm": {}, "budget": {}} #TODO: check if we should remove "algorithm" key
 
     def gather_data(self, product):
         gathering_price = self.production_prices[-1][product]
@@ -268,6 +269,12 @@ class DataProvider(DataPlayer):
         elif possible_to_decrease:
             self.current_prices[(product, 'selling_price')] -= price_step
 
+    def update_utility_dict(self, turn):
+        budget_utility = self.utility.calculate_budget_utility(self.budget)
+        self.utility_history["budget"][turn] = budget_utility  # for later statistic
+
+    def calculate_utility(self):
+        return self.utility.calculate_total_utility(0, self.budget)
 
 class DataConsumer(DataPlayer):
 
@@ -296,7 +303,7 @@ class DataConsumer(DataPlayer):
             self.current_prices[(product, 'buying_price')] += price_step
 
     def update_utility_dict(self, turn):
-        owned_products = [p for p in self.products_in_inventory if self.products_in_inventory[p] > 0]
+        owned_products = [p for p in self.products_in_inventory[-1] if self.products_in_inventory[-1][p] > 0]
         algorithms_utility = self.utility.calculate_algorithms_utility(self.product_values_for_player,
                                                                        self.product_turn_bought, owned_products, turn)
         budget_utility = self.utility.calculate_budget_utility(self.budget)

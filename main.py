@@ -24,7 +24,7 @@ def main():
                                        MAXIMAL_BUYING_BUDGET, MINIMAL_SELLING_BUDGET, MAXIMAL_SELLING_BUDGET,
                                        CONSTANT_PRODUCTION_PRICE, CONSTANT_CONSUMPTION_UTILITY,
                                        NUMBER_OF_PRODUCTS_PER_BUYER, NUMBER_OF_PRODUCTS_PER_SELLER,
-                                       products_list)
+                                       products_list,DECAY_FACTOR)
     for player in players.values():
         print(player)
         print('----')

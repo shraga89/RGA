@@ -73,9 +73,10 @@ class DataPlayerUtility(AbstractUtility):
     """
     current_product_owners = dict()  # class shared object for knowing the possession of products
 
-    def __init__(self, number_of_players):
-        super(DataPlayerUtility, self).__init__()
+    def __init__(self, number_of_players,decay_factor = 1,algorithm_ratio=1,budget_ratio=1):
+        super(DataPlayerUtility, self).__init__(algorithm_ratio,budget_ratio)
         self.number_of_players = number_of_players
+        self.decay_factor = decay_factor
 
     def update_product_owners(self,product,player):
         if product not in self.current_product_owners:
@@ -88,7 +89,7 @@ class DataPlayerUtility(AbstractUtility):
         algorithms_utility = {}
         for product in owned_products:
             player_raw_value = player_value_for_products[product]
-            time_based_utility = player_raw_value * (1 - (turn - product_turn_bought[product]) / turn)
+            time_based_utility = player_raw_value * self.decay_factor**(turn-product_turn_bought[product])
             number_of_product_owners = len(self.current_product_owners[product])
             shared_product_utility = player_raw_value * (
                         (self.number_of_players - number_of_product_owners) / self.number_of_players)

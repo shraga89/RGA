@@ -82,8 +82,7 @@ class NaiveSimulation(Simulation):
                 buyers_dict.pop(buyer)
                 buyers_list.remove(buyer)
                 sellers_list.remove(seller)
-                self.players['buyers'][buyer].utility.update_product_owners(product,self.players['buyers'][buyer])
-                
+
                 for a_buyer, available_sellers in list(buyers_dict.items()):
                     try:
                         available_sellers.remove(seller)
@@ -166,6 +165,7 @@ class DataMarketSimulation(Simulation):
         for player in set(self.players['buyers'].values()).union(self.players['sellers'].values()):
             player.update_history(self.history[self.history['turn'] == self.turn])
             player.set_current_prices()
+            player.update_utility_dict(self.turn)
 
     def run_one_step_for_single_product(self, product):
 
@@ -182,7 +182,8 @@ class DataMarketSimulation(Simulation):
             if self.create_transaction(self.players['sellers'][seller], self.players['buyers'][buyer], product):
                 buyers_dict.pop(buyer)
                 buyers_list.remove(buyer)
-
+                self.players['buyers'][buyer].product_turn_bought[product]=self.turn
+                self.players['buyers'][buyer].utility.update_product_owners(product,self.players['buyers'][buyer])
             for a_buyer, available_sellers in list(buyers_dict.items()):
                 if len(available_sellers) == 0:
                     buyers_dict.pop(a_buyer)

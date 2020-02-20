@@ -51,10 +51,10 @@ def generate_players(players_type, number_of_buyers, number_of_sellers,
 def generate_data_players(number_of_buyers, number_of_sellers, minimal_buying_budget, maximal_buying_budget,
                           minimal_selling_budget, maximal_selling_budget, constant_production_price,
                           constant_consumption_utility, number_of_products_per_buyer, number_of_products_per_seller,
-                          product_list):
+                          product_list,decay_factor):
     players = {'buyers': {}, 'sellers': {}}
     for i in range(number_of_buyers):
-        utility = DataPlayerUtility(number_of_buyers)
+        utility = DataPlayerUtility(number_of_buyers,decay_factor)
         player_id = 'buyer_' + str(i)
         budget = generate_random_budget(minimal_buying_budget, maximal_buying_budget)
         initial_consumption_utility = set_initial_consumption_utility(product_list, constant_consumption_utility)
