@@ -13,11 +13,10 @@ class DataProduct(Product):
         self.additional_features = additional_features
 
     def __hash__(self):
-        return hash((self.name,self.domain))
+        return hash((self.name, self.domain))
 
     def __eq__(self, other):
         return self.name == other.name and self.domain == other.domain
 
-
     def __str__(self):
-        return self.name+" - "+self.domain
+        return self.name + " - " + self.domain

@@ -1,13 +1,7 @@
-from config import *
-from utils import *
-import Player as pl
 from abc import abstractmethod
 import random
-import copy
-import itertools as itt
 import pandas as pd
-import numpy as np
-from Utility import DataPlayerUtility
+
 
 class Simulation:
     def __init__(self, horizon, product_list, players_dict):
@@ -182,8 +176,8 @@ class DataMarketSimulation(Simulation):
             if self.create_transaction(self.players['sellers'][seller], self.players['buyers'][buyer], product):
                 buyers_dict.pop(buyer)
                 buyers_list.remove(buyer)
-                self.players['buyers'][buyer].product_turn_bought[product]=self.turn
-                self.players['buyers'][buyer].utility.update_product_owners(product,self.players['buyers'][buyer])
+                self.players['buyers'][buyer].product_turn_bought[product] = self.turn
+                self.players['buyers'][buyer].utility.update_product_owners(product, self.players['buyers'][buyer])
             for a_buyer, available_sellers in list(buyers_dict.items()):
                 if len(available_sellers) == 0:
                     buyers_dict.pop(a_buyer)

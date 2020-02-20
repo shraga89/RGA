@@ -238,7 +238,7 @@ class DataProvider(DataPlayer):
     def __init__(self, id, budget, products, relevant_products, initial_production_price: dict, utility):
         super().__init__(id, 'seller', budget, products, relevant_products, utility)
         self.production_prices.append(initial_production_price)
-        self.utility_history = {"algorithm": {}, "budget": {}} #TODO: check if we should remove "algorithm" key
+        self.utility_history = {"algorithm": {}, "budget": {}}  # TODO: check if we should remove "algorithm" key
 
     def gather_data(self, product):
         gathering_price = self.production_prices[-1][product]
@@ -275,6 +275,7 @@ class DataProvider(DataPlayer):
 
     def calculate_utility(self):
         return self.utility.calculate_total_utility(0, self.budget)
+
 
 class DataConsumer(DataPlayer):
 
