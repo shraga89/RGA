@@ -224,6 +224,10 @@ class DataPlayer(Player):
     def set_selling_price(self, product):
         pass
 
+    @abstractmethod
+    def update_budget(self):
+        pass
+
     def set_current_prices(self):
         if 'seller' not in self.type:
             for product in self.all_existing_products:
@@ -231,6 +235,7 @@ class DataPlayer(Player):
         if 'buyer' not in self.type:
             for product in self.all_existing_products:
                 self.set_selling_price(product)
+
 
 
 class DataProvider(DataPlayer):
@@ -253,8 +258,8 @@ class DataProvider(DataPlayer):
     def set_buying_price(self, product):
         pass
 
-    def calculate_utility(self):
-        return self.utility.calculate_budget_utility(self.budget)
+    def update_budget(self): # exisits for the sake of possible future directions
+        self.budget=self.budget
 
     def set_selling_price(self, product, price_step=1):
         last_price = self.get_current_selling_price(product)
@@ -269,12 +274,14 @@ class DataProvider(DataPlayer):
         elif possible_to_decrease:
             self.current_prices[(product, 'selling_price')] -= price_step
 
+
+
     def update_utility_dict(self, turn):
         budget_utility = self.utility.calculate_budget_utility(self.budget)
         self.utility_history["budget"][turn] = budget_utility  # for later statistic
 
-    def calculate_utility(self):
-        return self.utility.calculate_total_utility(0, self.budget)
+    # def calculate_utility(self):
+    #     return self.utility.calculate_total_utility(0, self.budget)
 
 
 class DataConsumer(DataPlayer):
@@ -311,11 +318,19 @@ class DataConsumer(DataPlayer):
         self.utility_history["algorithm"][turn] = algorithms_utility
         self.utility_history["budget"][turn] = budget_utility  # for later statistic
 
-    def calculate_utility(self):
+
+    def accumulated_algorithm_utility(self):
         algorithms_accumulated_utility = sum(
             [self.utility_history["algorithm"][turn][p] for turn in self.utility_history["algorithm"] for p in
              self.utility_history["budget"][turn]])
-        return self.utility.calculate_total_utility(algorithms_accumulated_utility, self.budget)
+        return algorithms_accumulated_utility
+
+    # def calculate_utility(self):
+    #
+    #     return self.utility.calculate_total_utility(algorithms_accumulated_utility, self.budget)
 
     def set_selling_price(self, product):
         pass
+
+    def update_budget(self):
+        self.budget+=self.accumulated_algorithm_utility()
