@@ -25,45 +25,17 @@ class AbstractUtility:
         return self.algorithm_ratio * algorithm_utility + self.budget_ratio * budget
 
 
-# class SimpleUtility(AbstractUtility):
-#     """
-#     Class defines utility as the sum of product values to the player minus the total products cost.
-#     In addition, we add the current seller budget that player has
-#     """
-#
-#     def __init__(self):
-#         super(SimpleUtility, self).__init__()
-#
-#     def calculate_buyer_utility(self, player_value_for_products: dict, owned_products: list):
-#         return sum([player_value_for_products[product] for product in owned_products])
-#
-#     def calculate_seller_utility(self, budget):
-#         return budget
+class SimpleDataPlayerUtility(AbstractUtility):
+    def __init__(self,algorithm_ratio=1, budget_ratio=1):
+        super(SimpleDataPlayerUtility,self).__init__(algorithm_ratio,budget_ratio)
 
 
-# class LeverageUtility(AbstractUtility):
-#     """
-#     Class defines utility of buyer as the sum of product values to the player minus the total products cost.
-#     Product values are also a function of the number of player that own the products.
-#     In addition, we add the current seller budget that player has
-#     """
-#     current_product_owners = dict()  # class shared object for knowing the possession of products
-#
-#     def __init__(self, number_of_players):
-#         super(LeverageUtility, self).__init__()
-#         self.number_of_players = number_of_players
-#
-#     def real_value_of_player(self, player_raw_value, product):
-#         number_of_owners = len(self.current_product_owners[product])
-#         return player_raw_value * ((self.number_of_players - number_of_owners) / self.number_of_players)
-#
-#     def calculate_buyer_utility(self, player_value_for_products: dict, owned_products: list):
-#         return sum(
-#             [self.real_value_of_player(player_value_for_products[product], product) for
-#              product in owned_products])
-#
-#     def calculate_seller_utility(self, budget):
-#         return budget
+    def calculate_algorithms_utility(self, player_value_for_products: dict, product_turn_bought: dict,
+    owned_products: list,    turn):
+        return sum(player_value_for_products[p] for p in owned_products)
+
+    def calculate_budget_utility(self, budget):
+        return budget
 
 
 class DataPlayerUtility(AbstractUtility):
