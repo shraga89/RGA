@@ -333,4 +333,4 @@ class DataConsumer(DataPlayer):
         pass
 
     def update_budget(self):
-        self.budget+=self.accumulated_algorithm_utility()
+        self.budget += self.accumulated_algorithm_utility()
