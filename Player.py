@@ -237,7 +237,6 @@ class DataPlayer(Player):
                 self.set_selling_price(product)
 
 
-
 class DataProvider(DataPlayer):
 
     def __init__(self, id, budget, products, relevant_products, initial_production_price: dict, utility):
@@ -258,8 +257,8 @@ class DataProvider(DataPlayer):
     def set_buying_price(self, product):
         pass
 
-    def update_budget(self): # exisits for the sake of possible future directions
-        self.budget=self.budget
+    def update_budget(self):  # exisits for the sake of possible future directions
+        self.budget = self.budget
 
     def set_selling_price(self, product, price_step=1):
         last_price = self.get_current_selling_price(product)
@@ -273,8 +272,6 @@ class DataProvider(DataPlayer):
             return
         elif possible_to_decrease:
             self.current_prices[(product, 'selling_price')] -= price_step
-
-
 
     def update_utility_dict(self, turn):
         budget_utility = self.utility.calculate_budget_utility(self.budget)
@@ -292,6 +289,24 @@ class DataConsumer(DataPlayer):
         self.utility_history = {"algorithm": {}, "budget": {}}
         self.product_turn_bought = {}  # what turn the product was bought
         self.product_values_for_player = initial_consumption_utility  # TODO: CAHNGE TO FIT THE CODE!!
+        self.strategy = None
+
+    def set_strategy(self,
+                     strategy):  # sets the strategy class of player - enables to change strategies during simulation
+        self.strategy = strategy
+
+    def get_estimations_for_optimization(self, turn, total_steps, type_of_auction, number_of_players_in_auction):
+        steps_left = total_steps - turn
+        costs = {product: self.strategy.cost_estimation(self.product_values_for_player[product] * steps_left,
+                                                        type_of_auction, number_of_players=number_of_players_in_auction)
+                 for product in self.relevant_products}
+        winning_estimations = {product: self.strategy.winner_determination_function_estimation() for product in
+                               self.relevant_products}  # TODO: Might be changed in terms of arguments
+        bids = {
+            product: self.strategy.bid_strategy(self.product_values_for_player[product] * steps_left, type_of_auction,
+                                                number_of_players=number_of_players_in_auction) for product in
+            self.relevant_products}
+        return costs, winning_estimations, bids
 
     def is_product_relevant(self, product):
         return product in self.relevant_products and self.budget >= self.get_current_buying_price(product) \
@@ -317,7 +332,6 @@ class DataConsumer(DataPlayer):
         budget_utility = self.utility.calculate_budget_utility(self.budget)
         self.utility_history["algorithm"][turn] = algorithms_utility
         self.utility_history["budget"][turn] = budget_utility  # for later statistic
-
 
     def accumulated_algorithm_utility(self):
         algorithms_accumulated_utility = sum(
