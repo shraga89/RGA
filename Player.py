@@ -296,17 +296,21 @@ class DataConsumer(DataPlayer):
         self.strategy = strategy
 
     # def get_estimations_for_optimization(self, turn, total_steps, type_of_auction, number_of_players_in_auction):
-    def get_estimations_for_optimization(self, turn, total_steps, **kwargs):
-        steps_left = total_steps - turn
-        costs = {product: self.strategy.cost_estimation(valuation=self.product_values_for_player[product] * steps_left)
+    def get_estimations_for_optimization(self, **kwargs):
+        turn = kwargs["turn"]
+        total_steps = kwargs["total_steps"]
+        steps_left = total_steps-turn
+        valuaions = {product: self.product_values_for_player[product]*steps_left for product in self.relevant_products}
+        costs = {product: self.strategy.cost_estimation(valuation=valuaions[product],**kwargs)
                  for product in self.relevant_products}
         winning_estimations = {product: self.strategy.winner_determination_function_estimation() for product in
                                self.relevant_products}  # TODO: Might be changed in terms of arguments
         bids = {
-            product: self.strategy.bid_strategy(valuations=self.product_values_for_player[product] * steps_left) for
+            product: self.strategy.bid_strategy(valuation=valuaions[product],**kwargs) for
             product in
             self.relevant_products}
         return costs, winning_estimations, bids
+
 
     def is_product_relevant(self, product):
         return product in self.relevant_products and self.budget >= self.get_current_buying_price(product) \
