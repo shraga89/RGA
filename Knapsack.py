@@ -45,23 +45,23 @@ class NaiveKnapsack(ExtendedKnapsack):
         model = Model()
         products = self.products
         budget = self.player.budget
+        print(budget)
         valuations = self.player.product_values_for_player
-        costs, _, _ = self.player.get_estimations_for_optimization(**{"turn": 6, "total_steps": 100})
+        costs, _, bids = self.player.get_estimations_for_optimization(**{"turn": 0, "total_steps": 0.5})
 
-        n = len(products)
         x = {}
         for product in products:
-            x[product] = model.addVar(n, vtype=GRB.BINARY, name='x')
+            x[product] = model.addVar(vtype=GRB.BINARY, name='x')
             print(x[product], valuations[product], costs[product])
 
-        model.setObjective(quicksum(x[product] * valuations[product] for product in products), GRB.MAXIMIZE)
-        model.addConstr(quicksum(x[product] * costs[product]) <= budget for product in products)
+        model.setObjective(quicksum(x[product] * (valuations[product] - costs[product]) for product in products), GRB.MAXIMIZE)
+        model.addConstr(quicksum(x[product] * costs[product] for product in products) <= budget)
 
         model.optimize()
 
 
 if __name__ == '__main__':
-    my_player = DataConsumer("greg", 1000, ["a", "b", "c"], ["a", "b", "c"], {"a": 30, "b": 40, "c": 50},
+    my_player = DataConsumer("greg", 10000, ["a", "b", "c"], ["a", "b", "c"], {"a": 30, "b": 40, "c": 50},
                              SimpleDataPlayerUtility())
     my_player.set_strategy(ConservativeStrategy())
     my_solver = NaiveKnapsack(my_player, "dist")
