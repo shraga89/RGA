@@ -25,14 +25,14 @@ class ConservativeStrategy(Strategy):
 
     def bid_strategy(self, **kwargs):
         try:
-            valuation, = kwargs["valuation"]
+            valuation = kwargs["valuation"]
             return valuation
         except:
             raise ValueError("Enter valuation argument")
 
     def cost_estimation(self, **kwargs):
         try:
-            valuation, = kwargs["valuation"]
+            valuation = kwargs["valuation"]
             return valuation
         except:
             raise ValueError("Enter valuation argument")
@@ -64,7 +64,7 @@ class AuctionAwareConservativeStrategy(Strategy):
 
     def cost_estimation(self, **kwargs):
         try:
-            valuation, = kwargs["valuation"]
+            valuation = kwargs["valuation"]
             return valuation
         except:
             raise ValueError("Enter valuation argument")
