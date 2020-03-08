@@ -1,0 +1,35 @@
+
+\subsection{Products Allocation}
+
+Next, we define the \emph{products allocation} problem with respect to a single player $\player$ before timestamp $t$ in the market horizon $T$.
+
+Let $\productset = \langle \product_1, \product_2, \dots, \product_n\rangle$ be the set of relevant products for the player $\player$. Generally, a player has a budget $\budget$ and a valuation value $\valuation_i$ for each relevant product $\product_i$. At timestamp $0$, the set of products $\productset$, its corresponding valuations $\valuationset$ and an initial $\budget$ are set. While the valuation values of products stays constant throughout the horizon, $\productset$ and $\budget$ change with respect to the interaction in the market. We denote the products set available at time $t$ and the current budget at time $t$ as $\productset^{t}$ and $\budget^{t}$, respectively. We assume that the only thing that changes the product set is that a player has purchased the product and thus, $\productset^{t} \subseteq \productset^{t^{\prime}}, t^{\prime}<t$ and $\productset^{0} = \productset$. The budget changes with respect to the revenue from each purchased product and its cost.  
+
+In practice, the player can not simply purchase any product she wishes, even if she has a large enough budget for two primary reasons. First, a the ``buying'' player and the ''selling'' player may not be synchronized (\emph{e.g.,} the seller demands a price that the buyer is not willing to pay). Second, when an auction is in order, the player may not win the auction for the product she wishes to purchase. Thus, at time $t$ the player has to select a subset of products $\bar{\productset} \subseteq \productset^{t-1}$ that maximizes her future revenues. To simplify the notation, we denote that number of products available at time $t$ as $m\leq n$. In what follows, let $\costset = \langle \cost_1, \cost_2, \dots, \cost_{m}\rangle, c_i\in {\rm I\!R}$ and $\winset = \langle \win_1, \win_2, \dots, \win_m\rangle, \win_{m}\in \{0,1\}$ represent a realization of costs and win indicators of the relevant products after timestamp $t$ has completed, respectively.
+
+In practice, a player has to allocate a subset of products at the beginning of time $t$. Thus, the player does not know the actual cost of products when the product allocation takes place. Accordingly, the player has to estimate the costs $\hat{\costset} = \langle \hat{\cost}_1, \hat{\cost}_2, \dots, \hat{\cost}_m\rangle$ and wining indicators $\hat{\winset} = \langle \hat{\win}_1, \hat{\win}_2, \dots, \hat{\win}_m\rangle$. Using these estimations, the \emph{products allocation} problem can be formalized as follows:
+
+%\begin{equation*}
+%  \begin{aligned}
+%  & \underset{X}{\text{minimize}} & & (\valuationset - \costset)^{T}\cdot\winset\cdot X^{T} \\
+%  & \text{subject to} & & f_i(x) \leq b_i, \; i = 1, \ldots, m.
+%  \end{aligned}
+%\end{equation*}
+
+\begin{equation*}
+\begin{aligned}
+& \underset{X}{\text{minimize}} & & \sum_{i=1}^{m} (\valuation_{i} - \hat{\cost}_{i})\cdot\hat{\win}_{i}\cdot X_{i} \\
+& \text{subject to} & & \sum_{i=1}^{m} \hat{\cost}_{i}\cdot\hat{\win}_{i}\cdot X_{i} \leq \budget \\
+& & & X_{i} \in \{0,1\} \; i = 1, \ldots, m. & 
+\end{aligned}
+\end{equation*}
+
+\noindent Recalling that $\hat{\win}_{i}\in \{0,1\}$ the player can actually decrease the size of $\productset^{t-1}$ to the set of product she estimates she would win, \emph{i.e.,} $win(\productset^{t-1}) = \{p_{i}\in \productset^{t-1} | \hat{w}_{i} = 1\}$. We denote the size of $win(\productset^{t-1})$ as $m_{win}$  
+
+\begin{equation*}
+\begin{aligned}
+& \underset{X}{\text{minimize}} & & \sum_{i=1}^{m_{win}} (\valuation_{i} - \hat{\cost}_{i})\cdot X_{i} \\
+& \text{subject to} & & \sum_{i=1}^{m_{win}} \hat{\cost}_{i}\cdot X_{i} \leq \budget \\
+& & & X_{i} \in \{0,1\} \; i = 1, \ldots, m_{win}. & 
+\end{aligned}
+\end{equation*}
