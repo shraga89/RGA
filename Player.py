@@ -295,7 +295,6 @@ class DataConsumer(DataPlayer):
                      strategy):  # sets the strategy class of player - enables to change strategies during simulation
         self.strategy = strategy
 
-    # def get_estimations_for_optimization(self, turn, total_steps, type_of_auction, number_of_players_in_auction):
     def get_estimations_for_optimization(self, **kwargs):
         turn = kwargs["turn"]
         total_steps = kwargs["total_steps"]
