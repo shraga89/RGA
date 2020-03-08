@@ -127,3 +127,4 @@ class AggregatedHistory(NaiveHistoryBasedStrategy):
             return valuation
         else:
             raise ValueError("auction type parameter was entered illegaly - legal inputs: first/second")
+
