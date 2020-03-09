@@ -1,6 +1,7 @@
 from abc import abstractmethod
 import random
 import pandas as pd
+from Knapsack import NaiveKnapsack
 
 
 class Simulation:
@@ -152,17 +153,37 @@ class DataMarketSimulation(Simulation):
             self.turn += 1
         self.print_end_result(False, 'sim.csv', None)
 
+    def create_bids(self):
+        bids = {}
+        for player in set(self.players['buyers'].values()):
+            cost_estimation = {}
+            win_estimation = {}
+            for product in self.product_list:
+                cost_estimation[product] = player.cost_estimation_strategy.cost_estimation(agg="last",
+                                                                                           price_history=player.retrieve_price_history(
+                                                                                               product))
+                win_estimation[product] = player.bid_startegy.winner_determination_function_estimation()
+            product_choice_mechanism = NaiveKnapsack(player, "")
+            relevant_products = product_choice_mechanism.solve(self.turn, self.horizon)
+            player.relevant_products = relevant_products
+            for product in relevant_products:
+                bids[(player, product)] = player.bid_startegy.bid_strategy(type_of_auction='second',
+                                                                           valuation=(player.product_values_for_player[
+                                                                                          product]
+                                                                                      * (self.horizon - self.turn)))
+        return bids
+
     def run_one_step(self):
+        bids = self.create_bids()
         self.create_inventory()
         for product in self.product_list:
-            self.run_one_step_for_single_product(product)
+            self.run_auction_for_single_product(product)
         for player in set(self.players['buyers'].values()).union(self.players['sellers'].values()):
             player.update_history(self.history[self.history['turn'] == self.turn])
             player.set_current_prices()
             player.update_utility_dict(self.turn)
 
-    def run_one_step_for_single_product(self, product):
-
+    def run_auction_for_single_product(self, product):
         sellers_list = [seller_id for seller_id, seller in self.players['sellers'].items()
                         if seller.is_product_relevant(product)]
         buyers_list = [buyer_id for buyer_id, buyer in self.players['buyers'].items()

@@ -1,7 +1,7 @@
 from config import *
 from Player import DataConsumer
 from scipy import stats as st
-from Strategy import ConservativeStrategy
+from Strategy import AggregatedHistoryCostStrategy
 from gurobipy import *
 from Utility import *
 
@@ -40,18 +40,18 @@ class NaiveKnapsack(ExtendedKnapsack):
     def __init__(self, player: DataConsumer, distribution: str):
         super().__init__(player, distribution)
 
-    def solve(self):
+    def solve(self, turn, total_steps) -> set:
 
         model = Model()
         products = self.products
         budget = self.player.budget
         print(budget)
         valuations = self.player.product_values_for_player
-        costs, _, bids = self.player.get_estimations_for_optimization(**{"turn": 0, "total_steps": 0.5})
+        costs, _, bids = self.player.get_estimations_for_optimization(turn=turn, total_steps=total_steps)
 
         x = {}
         for product in products:
-            x[product] = model.addVar(vtype=GRB.BINARY, name='x')
+            x[product] = model.addVar(vtype=GRB.BINARY, name=f'x_{product}')
             print(x[product], valuations[product], costs[product])
 
         model.setObjective(quicksum(x[product] * (valuations[product] - costs[product]) for product in products), GRB.MAXIMIZE)
@@ -59,13 +59,20 @@ class NaiveKnapsack(ExtendedKnapsack):
 
         model.optimize()
 
+        to_return = set()
+        for x in model.getVars():
+            if x.x:
+                to_return.add(x.varName[2:])
+
+        return to_return
+
 
 if __name__ == '__main__':
     my_player = DataConsumer("greg", 10000, ["a", "b", "c"], ["a", "b", "c"], {"a": 30, "b": 40, "c": 50},
                              SimpleDataPlayerUtility())
-    my_player.set_cost_estimation_strategy(ConservativeStrategy())
+    my_player.set_cost_estimation_strategy(AggregatedHistoryCostStrategy())
     my_solver = NaiveKnapsack(my_player, "dist")
-    my_solver.solve()
+    print(my_solver.solve())
 
 
 

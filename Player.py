@@ -20,8 +20,7 @@ class Player:
         for p in products:
             self.set_initial_prices(p, setting_initial_prices)
 
-
-    def retrieve_price_history(self,product):
+    def retrieve_price_history(self, product) -> list:
         price_history = self.price_history[(self.price_history['outcome'] == 'successful') & (self.price_history['product'] == product)].sort_values("turn")["actual_price"].values
         return price_history
 
@@ -319,7 +318,6 @@ class DataConsumer(DataPlayer):
             product in
             self.relevant_products}
         return costs, winning_estimations, bids
-
 
     def is_product_relevant(self, product):
         return product in self.relevant_products and self.budget >= self.get_current_buying_price(product) \
