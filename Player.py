@@ -20,6 +20,11 @@ class Player:
         for p in products:
             self.set_initial_prices(p, setting_initial_prices)
 
+
+    def retrieve_price_history(self,product):
+        price_history = self.price_history[(self.price_history['outcome'] == 'successful') & (self.price_history['product'] == product)].sort_values("turn")["actual_price"].values
+        return price_history
+
     def set_initial_prices(self, product, method='random'):
         if method == "random":
             return self.set_random_initial_prices(product)
