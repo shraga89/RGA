@@ -1,6 +1,7 @@
 from abc import abstractmethod
 import numpy as np
 
+
 class Strategy:
     def __init__(self):
         pass
@@ -75,14 +76,15 @@ class AuctionAwareConservativeStrategy(Strategy):
 
 class NaiveHistoryBasedStrategy(Strategy):
     def __init__(self):
-        super(NaiveHistoryBasedStrategy,self).__init__()
+        super(NaiveHistoryBasedStrategy, self).__init__()
 
     def winner_determination_function_estimation(self, **kwargs):
         return 1
 
-class AggregatedHistory(NaiveHistoryBasedStrategy):
+
+class AggregatedHistoryStrategy(NaiveHistoryBasedStrategy):
     def __init__(self):
-        super(AggregatedHistory,self).__init__()
+        super(AggregatedHistoryStrategy, self).__init__()
 
     def cost_estimation(self, **kwargs):
         """
@@ -93,24 +95,23 @@ class AggregatedHistory(NaiveHistoryBasedStrategy):
         """
         try:
             aggregation = kwargs["agg"]
-            history = kwargs["history"]
-            if not history:
-                return np.random.randint(0,int(kwargs["evaluaion"]))
-            if aggregation=="mean":
-                return np.mean(history)
-            elif aggregation=="median":
-                return np.median(history)
-            elif aggregation=="max":
-                return max(history)
-            elif aggregation=="min":
-                return min(history)
-            elif aggregation=="last":
-                return history[-1]
+            price_history = kwargs["price_history"]
+            if not price_history:
+                return np.random.randint(0, int(kwargs["evaluaion"]))
+            if aggregation == "mean":
+                return np.mean(price_history)
+            elif aggregation == "median":
+                return np.median(price_history)
+            elif aggregation == "max":
+                return max(price_history)
+            elif aggregation == "min":
+                return min(price_history)
+            elif aggregation == "last":
+                return price_history[-1]
             else:
                 raise ValueError("Enter history argument to strategy cost estimation function")
         except KeyError:
             raise KeyError("Enter history argument to strategy cost estimation function")
-
 
     def bid_strategy(self, **kwargs):
         try:
@@ -127,4 +128,3 @@ class AggregatedHistory(NaiveHistoryBasedStrategy):
             return valuation
         else:
             raise ValueError("auction type parameter was entered illegaly - legal inputs: first/second")
-
