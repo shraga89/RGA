@@ -289,23 +289,28 @@ class DataConsumer(DataPlayer):
         self.utility_history = {"algorithm": {}, "budget": {}}
         self.product_turn_bought = {}  # what turn the product was bought
         self.product_values_for_player = initial_consumption_utility  # TODO: CAHNGE TO FIT THE CODE!!
-        self.strategy = None
+        self.cost_estimation_strategy = None
+        self.bid_strategy = None
 
-    def set_strategy(self,
-                     strategy):  # sets the strategy class of player - enables to change strategies during simulation
-        self.strategy = strategy
+    def set_cost_estimation_strategy(self,
+                                     strategy):  # sets the strategy class of player - enables to change strategies during simulation
+        self.cost_estimation_strategy = strategy
+
+    def set_bid_strategy(self,
+                                     strategy):  # sets the strategy class of player - enables to change strategies during simulation
+        self.bid_strategy = strategy
 
     def get_estimations_for_optimization(self, **kwargs):
         turn = kwargs["turn"]
         total_steps = kwargs["total_steps"]
         steps_left = total_steps-turn
         valuaions = {product: self.product_values_for_player[product]*steps_left for product in self.relevant_products}
-        costs = {product: self.strategy.cost_estimation(valuation=valuaions[product],**kwargs)
+        costs = {product: self.cost_estimation_strategy.cost_estimation(valuation=valuaions[product], **kwargs)
                  for product in self.relevant_products}
-        winning_estimations = {product: self.strategy.winner_determination_function_estimation() for product in
+        winning_estimations = {product: self.cost_estimation_strategy.winner_determination_function_estimation() for product in
                                self.relevant_products}  # TODO: Might be changed in terms of arguments
         bids = {
-            product: self.strategy.bid_strategy(valuation=valuaions[product],**kwargs) for
+            product: self.cost_estimation_strategy.bid_strategy(valuation=valuaions[product], **kwargs) for
             product in
             self.relevant_products}
         return costs, winning_estimations, bids

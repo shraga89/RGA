@@ -63,7 +63,7 @@ class NaiveKnapsack(ExtendedKnapsack):
 if __name__ == '__main__':
     my_player = DataConsumer("greg", 10000, ["a", "b", "c"], ["a", "b", "c"], {"a": 30, "b": 40, "c": 50},
                              SimpleDataPlayerUtility())
-    my_player.set_strategy(ConservativeStrategy())
+    my_player.set_cost_estimation_strategy(ConservativeStrategy())
     my_solver = NaiveKnapsack(my_player, "dist")
     my_solver.solve()
 
