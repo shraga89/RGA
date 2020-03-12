@@ -21,7 +21,9 @@ class Player:
             self.set_initial_prices(p, setting_initial_prices)
 
     def retrieve_price_history(self, product) -> list:
-        price_history = self.price_history[(self.price_history['outcome'] == 'successful') & (self.price_history['product'] == product)].sort_values("turn")["actual_price"].values
+        price_history = self.price_history[
+            (self.price_history['outcome'] == 'successful') & (self.price_history['product'] == product)].sort_values(
+            "turn")["actual_price"].values
         return price_history
 
     def set_initial_prices(self, product, method='random'):
@@ -243,10 +245,12 @@ class DataPlayer(Player):
 
 class DataProvider(DataPlayer):
 
-    def __init__(self, id, budget, products, relevant_products, initial_production_price: dict, utility):
+    def __init__(self, id, budget, products, relevant_products, initial_production_price: dict, utility,
+                 threshold_values):
         super().__init__(id, 'seller', budget, products, relevant_products, utility)
         self.production_prices.append(initial_production_price)
         self.utility_history = {"algorithm": {}, "budget": {}}  # TODO: check if we should remove "algorithm" key
+        self.threshold_prices = threshold_values
 
     def gather_data(self, product):
         gathering_price = self.production_prices[-1][product]
@@ -301,17 +305,19 @@ class DataConsumer(DataPlayer):
         self.cost_estimation_strategy = strategy
 
     def set_bid_strategy(self,
-                                     strategy):  # sets the strategy class of player - enables to change strategies during simulation
+                         strategy):  # sets the strategy class of player - enables to change strategies during simulation
         self.bid_strategy = strategy
 
     def get_estimations_for_optimization(self, **kwargs):
         turn = kwargs["turn"]
         total_steps = kwargs["total_steps"]
-        steps_left = total_steps-turn
-        valuaions = {product: self.product_values_for_player[product]*steps_left for product in self.relevant_products}
+        steps_left = total_steps - turn
+        valuaions = {product: self.product_values_for_player[product] * steps_left for product in
+                     self.relevant_products}
         costs = {product: self.cost_estimation_strategy.cost_estimation(valuation=valuaions[product], **kwargs)
                  for product in self.relevant_products}
-        winning_estimations = {product: self.cost_estimation_strategy.winner_determination_function_estimation() for product in
+        winning_estimations = {product: self.cost_estimation_strategy.winner_determination_function_estimation() for
+                               product in
                                self.relevant_products}  # TODO: Might be changed in terms of arguments
         bids = {
             product: self.cost_estimation_strategy.bid_strategy(valuation=valuaions[product], **kwargs) for

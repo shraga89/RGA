@@ -4,9 +4,6 @@ import Simulation
 import Contract
 
 
-# TODO: update run_one_step_for_single_product in ProductionConsumptionSimulation
-# TODO: consider changing the history
-# TODO: update set_current_prices and remember to address the inventory
 
 
 def main():
@@ -23,7 +20,7 @@ def main():
                                     MAXIMAL_BUYING_BUDGET, MINIMAL_SELLING_BUDGET, MAXIMAL_SELLING_BUDGET,
                                     CONSTANT_PRODUCTION_PRICE, CONSTANT_CONSUMPTION_UTILITY,
                                     NUMBER_OF_PRODUCTS_PER_BUYER, NUMBER_OF_PRODUCTS_PER_SELLER,
-                                    products_list, DECAY_FACTOR)
+                                    products_list, DECAY_FACTOR, MINIMAL_SELLING_PRICE, MAXIMAL_SELLING_PRICE)
     for player in players.values():
         print(player)
         print('----')

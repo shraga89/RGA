@@ -3,6 +3,7 @@ import random
 import pandas as pd
 from Knapsack import NaiveKnapsack
 from Contract import Auction
+from random import shuffle, randint
 
 
 class Simulation:
@@ -135,10 +136,10 @@ class NaiveSimulation(Simulation):
 
 class DataMarketSimulation(Simulation):
 
-    def __init__(self, horizon, product_list, players_dict, contract: A):
+    def __init__(self, horizon, product_list, players_dict, contract: Auction):
         super().__init__(horizon, product_list, players_dict)
-        self.history = pd.DataFrame(columns=['turn', 'buyer', 'seller', 'product', 'outcome',
-                                             'actual_price', 'selling_price', 'buying_price'])
+        self.history = pd.DataFrame(columns=['turn', 'buyer', 'seller', 'product', 'actual_price',
+                                             'threshold_price', 'number_of_competitors'])
         self.turn = 0
         self.contract = contract
 
@@ -169,9 +170,11 @@ class DataMarketSimulation(Simulation):
             player.relevant_products = relevant_products
             for product in relevant_products:
                 bids[(player, product)] = min(player.bid_startegy.bid_strategy(type_of_auction='second',
-                                                                           valuation=(player.product_values_for_player[
-                                                                                          product]
-                                                                                      * (self.horizon - self.turn))),
+                                                                               valuation=(
+                                                                                           player.product_values_for_player[
+                                                                                               product]
+                                                                                           * (
+                                                                                                       self.horizon - self.turn))),
                                               player.budget)
         return bids
 
@@ -183,33 +186,59 @@ class DataMarketSimulation(Simulation):
             for player, some_product in bids.keys():
                 if some_product == product:
                     relevant_bids[(player, product)] = bids[(player, product)]
-            seller = self.determine_seller()
-            self.run_auction_for_single_product(product, seller, relevant_bids)
+            matching = self.determine_matching(product, relevant_bids)
+            self.run_auction_for_single_product(product, matching, relevant_bids)
         for player in set(self.players['buyers'].values()).union(self.players['sellers'].values()):
             player.update_history(self.history[self.history['turn'] == self.turn])
             player.set_current_prices()
             player.update_utility_dict(self.turn)
 
-    def determine_seller(self):
-        # TODO fill in
-        pass
+    def determine_matching(self, product, relevant_bids):
+        all_sellers = self.players["sellers"].values()
+        relevant_sellers = [seller for seller in all_sellers if product in seller.products_in_inventory[product] > 0]
+        relevant_buyers = [buyer for buyer, product in relevant_bids]
+        matching = self.create_random_matching_to_auctions(relevant_sellers, relevant_buyers)
+        return matching
 
-    def run_auction_for_single_product(self, product, seller, bids):
-        actual_buyer = self.contract.winner_determination(bids)
-        price = self.contract.price_determination(bids)
-        if actual_buyer and seller:
-            self.contract.do_transaction(actual_buyer, seller, product, price)
-        self.add_transaction_to_history(actual_buyer, seller, product, price)
+    def create_random_matching_to_auctions(self, buyers, sellers):
+        matching = {seller: [] for seller in sellers}
+        shuffle(buyers)
+        shuffle(sellers)
+        for buyer in buyers:
+            relevant_seller = sellers[randint(0, len(sellers) - 1)]
+            matching[relevant_seller].append(buyer)
+        return matching
 
-    def add_transaction_to_history(self, buyer, seller, product, price):
+    def run_auction_for_single_product(self, product, matching, bids):
+        for seller in matching:
+            threshold_price = seller.threshold_price
+            candidates = matching[seller]
+            relevant_bids = {buyer: bids[(buyer, product)] for buyer in candidates}
+            actual_buyer = self.contract.winner_determination(relevant_bids, threshold_price=threshold_price)
+            price = self.contract.price_determination(relevant_bids, threshold_price=threshold_price)
+            if actual_buyer is not None:
+                self.contract.do_transaction(actual_buyer, seller, product, price)
+            self.add_transaction_to_history(actual_buyer, seller, product, price, threshold_price, len(candidates))
+
+    def add_transaction_to_history(self, buyer, seller, product, price, threshold_price, number_of_competitors):
         if not buyer:
-            pass
-            # add unsuccessful transaction to history
+            self.history.append({"turn": self.turn,
+                                 'buyer': None,
+                                 'seller': seller.get_id(),
+                                 'product': product,
+                                 'actual_price': None,
+                                 'threshold_price': threshold_price,
+                                 'number_of_competitors': number_of_competitors},
+                                ignore_index=True)
         else:
-            pass
-            # add successful transaction to history
-
-
+            self.history.append({"turn": self.turn,
+                                 'buyer': buyer,
+                                 'seller': seller.get_id(),
+                                 'product': product,
+                                 'actual_price': price,
+                                 'threshold_price': threshold_price,
+                                 'number_of_competitors': number_of_competitors},
+                                ignore_index=True)
 
     # def run_auction_for_single_product(self, product):
     #     sellers_list = [seller_id for seller_id, seller in self.players['sellers'].items()
@@ -232,30 +261,30 @@ class DataMarketSimulation(Simulation):
     #                 buyers_dict.pop(a_buyer)
     #         buyers_list = list(buyers_dict.keys())
 
-    def create_transaction(self, seller, buyer, product):
-        outcome, info = self.contract.check_prerequisites([seller, buyer], product)
-        if not outcome:
-            self.history = self.history.append({'turn': self.turn,
-                                                'buyer': buyer.get_id(),
-                                                'seller': seller.get_id(),
-                                                'product': product,
-                                                'outcome': info,
-                                                'actual_price': None,
-                                                'selling_price': seller.get_current_selling_price(product),
-                                                'buying_price': buyer.get_current_buying_price(product)},
-                                               ignore_index=True)
-        else:
-            actual_price = self.contract.enact_contact([seller, buyer], product)
-            self.history = self.history.append({'turn': self.turn,
-                                                'buyer': buyer.get_id(),
-                                                'seller': seller.get_id(),
-                                                'product': product,
-                                                'outcome': info,
-                                                'actual_price': actual_price,
-                                                'selling_price': seller.get_current_selling_price(product),
-                                                'buying_price': buyer.get_current_buying_price(product)},
-                                               ignore_index=True)
-        return outcome
+    # def create_transaction(self, seller, buyer, product):
+    #     outcome, info = self.contract.check_prerequisites([seller, buyer], product)
+    #     if not outcome:
+    #         self.history = self.history.append({'turn': self.turn,
+    #                                             'buyer': buyer.get_id(),
+    #                                             'seller': seller.get_id(),
+    #                                             'product': product,
+    #                                             'outcome': info,
+    #                                             'actual_price': None,
+    #                                             'selling_price': seller.get_current_selling_price(product),
+    #                                             'buying_price': buyer.get_current_buying_price(product)},
+    #                                            ignore_index=True)
+    #     else:
+    #         # actual_price = self.contract.enact_contact([seller, buyer], product)
+    #         self.history = self.history.append({'turn': self.turn,
+    #                                             'buyer': buyer.get_id(),
+    #                                             'seller': seller.get_id(),
+    #                                             'product': product,
+    #                                             'outcome': info,
+    #                                             'actual_price': actual_price,
+    #                                             'selling_price': seller.get_current_selling_price(product),
+    #                                             'buying_price': buyer.get_current_buying_price(product)},
+    #                                            ignore_index=True)
+    #     return outcome
 
     def visualize(self):
         pass
