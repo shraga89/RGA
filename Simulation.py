@@ -30,8 +30,8 @@ class Simulation:
         else:
             print(f"full horizon")
             print("-------------------------")
-        if success_only:
-            print_df = print_df[print_df['outcome'] == 'successful']
+        # if success_only:
+        #     print_df = print_df[print_df['outcome'] == 'successful']
         print(print_df.to_string() if len(print_df) > 0 else '')
         if export:
             print_df.to_csv(export)
@@ -161,15 +161,15 @@ class DataMarketSimulation(Simulation):
             cost_estimation = {}
             win_estimation = {}
             for product in self.product_list:
+                valuation = player.product_values_for_player[product]*(self.horizon-self.turn)
                 cost_estimation[product] = player.cost_estimation_strategy.cost_estimation(agg="last",
-                                                                                           price_history=player.retrieve_price_history(
-                                                                                               product))
-                win_estimation[product] = player.bid_startegy.winner_determination_function_estimation()
+                                                                                           price_history=player.retrieve_price_history(product),evaluaion=valuation)
+                win_estimation[product] = player.bid_strategy.winner_determination_function_estimation()
             product_choice_mechanism = NaiveKnapsack(player, "")
-            relevant_products = product_choice_mechanism.solve(self.turn, self.horizon)
+            relevant_products = product_choice_mechanism.solve(self.turn, self.horizon,cost_estimation)
             player.relevant_products = relevant_products
             for product in relevant_products:
-                bids[(player, product)] = min(player.bid_startegy.bid_strategy(type_of_auction='second',
+                bids[(player, product)] = min(player.bid_strategy.bid_strategy(type_of_auction='second',
                                                                                valuation=(
                                                                                            player.product_values_for_player[
                                                                                                product]
@@ -191,13 +191,13 @@ class DataMarketSimulation(Simulation):
         for player in set(self.players['buyers'].values()).union(self.players['sellers'].values()):
             player.update_history(self.history[self.history['turn'] == self.turn])
             player.set_current_prices()
-            player.update_utility_dict(self.turn)
+            # player.update_utility_dict(self.turn)
 
     def determine_matching(self, product, relevant_bids):
         all_sellers = self.players["sellers"].values()
-        relevant_sellers = [seller for seller in all_sellers if product in seller.products_in_inventory[product] > 0]
+        relevant_sellers = [seller for seller in all_sellers if seller.products_in_inventory[-1][product] > 0]
         relevant_buyers = [buyer for buyer, product in relevant_bids]
-        matching = self.create_random_matching_to_auctions(relevant_sellers, relevant_buyers)
+        matching = self.create_random_matching_to_auctions(relevant_buyers, relevant_sellers)
         return matching
 
     def create_random_matching_to_auctions(self, buyers, sellers):
@@ -211,7 +211,7 @@ class DataMarketSimulation(Simulation):
 
     def run_auction_for_single_product(self, product, matching, bids):
         for seller in matching:
-            threshold_price = seller.threshold_price
+            threshold_price = seller.threshold_prices[product]
             candidates = matching[seller]
             relevant_bids = {buyer: bids[(buyer, product)] for buyer in candidates}
             actual_buyer = self.contract.winner_determination(relevant_bids, threshold_price=threshold_price)

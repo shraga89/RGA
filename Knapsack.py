@@ -40,19 +40,19 @@ class NaiveKnapsack(ExtendedKnapsack):
     def __init__(self, player: DataConsumer, distribution: str):
         super().__init__(player, distribution)
 
-    def solve(self, turn, total_steps) -> set:
+    def solve(self, turn, total_steps, costs) -> set:
 
         model = Model()
         products = self.products
         budget = self.player.budget
         print(budget)
         valuations = self.player.product_values_for_player
-        costs, _, bids = self.player.get_estimations_for_optimization(turn=turn, total_steps=total_steps)
+        # costs, _, bids = self.player.get_estimations_for_optimization(turn=turn, total_steps=total_steps)
 
         x = {}
         for product in products:
-            x[product] = model.addVar(vtype=GRB.BINARY, name=f'x_{product}')
-            print(x[product], valuations[product], costs[product])
+            x[product] = model.addVar(vtype=GRB.BINARY)
+            # print(x[product], valuations[product], costs[product])
 
         model.setObjective(quicksum(x[product] * (valuations[product] - costs[product]) for product in products), GRB.MAXIMIZE)
         model.addConstr(quicksum(x[product] * costs[product] for product in products) <= budget)
@@ -60,9 +60,9 @@ class NaiveKnapsack(ExtendedKnapsack):
         model.optimize()
 
         to_return = set()
-        for x in model.getVars():
-            if x.x:
-                to_return.add(x.varName[2:])
+        for product, variable in x.items():
+            if x[product].x > 0:
+                to_return.add(product)
 
         return to_return
 

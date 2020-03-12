@@ -24,7 +24,7 @@ def main():
     for player in players.values():
         print(player)
         print('----')
-    contract = Contract.SimpleSellingContract()
+    contract = Contract.SecondPriceAuction()
     my_sim = Simulation.DataMarketSimulation(TIME_HORIZON, products_list, players, contract)
     my_sim.run_simulation()
 

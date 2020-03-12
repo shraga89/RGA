@@ -76,4 +76,4 @@ class AggregatedHistoryCostStrategy(CostStrategy):
             else:
                 raise ValueError("Enter history argument to strategy cost estimation function")
         except KeyError:
-            raise KeyError("Enter history argument to strategy cost estimation function")
+            raise KeyError("key value error in kwargs - check function arguments")
