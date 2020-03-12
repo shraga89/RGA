@@ -58,6 +58,12 @@ class Auction:
     def price_determination(self, bids, **kwargs):
         pass
 
+    def do_transaction(self, buyer, seller, product, price):
+        buyer.add_inventory(product, 1)
+        seller.budget += price
+        buyer.budget -= price
+        return price
+
 
 class FirstPriceAuction(Auction):
 

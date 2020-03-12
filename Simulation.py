@@ -2,6 +2,7 @@ from abc import abstractmethod
 import random
 import pandas as pd
 from Knapsack import NaiveKnapsack
+from Contract import Auction
 
 
 class Simulation:
@@ -134,7 +135,7 @@ class NaiveSimulation(Simulation):
 
 class DataMarketSimulation(Simulation):
 
-    def __init__(self, horizon, product_list, players_dict, contract):
+    def __init__(self, horizon, product_list, players_dict, contract: A):
         super().__init__(horizon, product_list, players_dict)
         self.history = pd.DataFrame(columns=['turn', 'buyer', 'seller', 'product', 'outcome',
                                              'actual_price', 'selling_price', 'buying_price'])
@@ -167,42 +168,69 @@ class DataMarketSimulation(Simulation):
             relevant_products = product_choice_mechanism.solve(self.turn, self.horizon)
             player.relevant_products = relevant_products
             for product in relevant_products:
-                bids[(player, product)] = player.bid_startegy.bid_strategy(type_of_auction='second',
+                bids[(player, product)] = min(player.bid_startegy.bid_strategy(type_of_auction='second',
                                                                            valuation=(player.product_values_for_player[
                                                                                           product]
-                                                                                      * (self.horizon - self.turn)))
+                                                                                      * (self.horizon - self.turn))),
+                                              player.budget)
         return bids
 
     def run_one_step(self):
         bids = self.create_bids()
         self.create_inventory()
         for product in self.product_list:
-            self.run_auction_for_single_product(product)
+            relevant_bids = {}
+            for player, some_product in bids.keys():
+                if some_product == product:
+                    relevant_bids[(player, product)] = bids[(player, product)]
+            seller = self.determine_seller()
+            self.run_auction_for_single_product(product, seller, relevant_bids)
         for player in set(self.players['buyers'].values()).union(self.players['sellers'].values()):
             player.update_history(self.history[self.history['turn'] == self.turn])
             player.set_current_prices()
             player.update_utility_dict(self.turn)
 
-    def run_auction_for_single_product(self, product):
-        sellers_list = [seller_id for seller_id, seller in self.players['sellers'].items()
-                        if seller.is_product_relevant(product)]
-        buyers_list = [buyer_id for buyer_id, buyer in self.players['buyers'].items()
-                       if buyer.is_product_relevant(product)]
-        buyers_dict = {buyer: sellers_list.copy() for buyer in buyers_list}
+    def determine_seller(self):
+        # TODO fill in
+        pass
 
-        while buyers_list:
-            buyer = random.sample(buyers_list, 1)[0]
-            random.shuffle(buyers_dict[buyer])
-            seller = buyers_dict[buyer].pop()
-            if self.create_transaction(self.players['sellers'][seller], self.players['buyers'][buyer], product):
-                buyers_dict.pop(buyer)
-                buyers_list.remove(buyer)
-                self.players['buyers'][buyer].product_turn_bought[product] = self.turn
-                self.players['buyers'][buyer].utility.update_product_owners(product, self.players['buyers'][buyer])
-            for a_buyer, available_sellers in list(buyers_dict.items()):
-                if len(available_sellers) == 0:
-                    buyers_dict.pop(a_buyer)
-            buyers_list = list(buyers_dict.keys())
+    def run_auction_for_single_product(self, product, seller, bids):
+        actual_buyer = self.contract.winner_determination(bids)
+        price = self.contract.price_determination(bids)
+        if actual_buyer and seller:
+            self.contract.do_transaction(actual_buyer, seller, product, price)
+        self.add_transaction_to_history(actual_buyer, seller, product, price)
+
+    def add_transaction_to_history(self, buyer, seller, product, price):
+        if not buyer:
+            pass
+            # add unsuccessful transaction to history
+        else:
+            pass
+            # add successful transaction to history
+
+
+
+    # def run_auction_for_single_product(self, product):
+    #     sellers_list = [seller_id for seller_id, seller in self.players['sellers'].items()
+    #                     if seller.is_product_relevant(product)]
+    #     buyers_list = [buyer_id for buyer_id, buyer in self.players['buyers'].items()
+    #                    if buyer.is_product_relevant(product)]
+    #     buyers_dict = {buyer: sellers_list.copy() for buyer in buyers_list}
+    #
+    #     while buyers_list:
+    #         buyer = random.sample(buyers_list, 1)[0]
+    #         random.shuffle(buyers_dict[buyer])
+    #         seller = buyers_dict[buyer].pop()
+    #         if self.create_transaction(self.players['sellers'][seller], self.players['buyers'][buyer], product):
+    #             buyers_dict.pop(buyer)
+    #             buyers_list.remove(buyer)
+    #             self.players['buyers'][buyer].product_turn_bought[product] = self.turn
+    #             self.players['buyers'][buyer].utility.update_product_owners(product, self.players['buyers'][buyer])
+    #         for a_buyer, available_sellers in list(buyers_dict.items()):
+    #             if len(available_sellers) == 0:
+    #                 buyers_dict.pop(a_buyer)
+    #         buyers_list = list(buyers_dict.keys())
 
     def create_transaction(self, seller, buyer, product):
         outcome, info = self.contract.check_prerequisites([seller, buyer], product)
