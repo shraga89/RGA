@@ -1,5 +1,8 @@
+\todo{overview}
 
-\subsection{Products Allocation}
+\subsection{``Naive'' Strategies for Buying Data}
+
+\subsection{Products Allocation Optimization Strategy}
 
 Next, we define the \emph{products allocation} problem with respect to a single player $\player$ before timestamp $t$ in the market horizon $T$.
 
@@ -8,13 +11,6 @@ Let $\productset = \langle \product_1, \product_2, \dots, \product_n\rangle$ be 
 In practice, the player can not simply purchase any product she wishes, even if she has a large enough budget for two primary reasons. First, a the ``buying'' player and the ''selling'' player may not be synchronized (\emph{e.g.,} the seller demands a price that the buyer is not willing to pay). Second, when an auction is in order, the player may not win the auction for the product she wishes to purchase. Thus, at time $t$ the player has to select a subset of products $\bar{\productset} \subseteq \productset^{t-1}$ that maximizes her future revenues. To simplify the notation, we denote that number of products available at time $t$ as $m\leq n$. In what follows, let $\costset = \langle \cost_1, \cost_2, \dots, \cost_{m}\rangle, c_i\in {\rm I\!R}$ and $\winset = \langle \win_1, \win_2, \dots, \win_m\rangle, \win_{m}\in \{0,1\}$ represent a realization of costs and win indicators of the relevant products after timestamp $t$ has completed, respectively.
 
 In practice, a player has to allocate a subset of products at the beginning of time $t$. Thus, the player does not know the actual cost of products when the product allocation takes place. Accordingly, the player has to estimate the costs $\hat{\costset} = \langle \hat{\cost}_1, \hat{\cost}_2, \dots, \hat{\cost}_m\rangle$ and wining indicators $\hat{\winset} = \langle \hat{\win}_1, \hat{\win}_2, \dots, \hat{\win}_m\rangle$. Using these estimations, the \emph{products allocation} problem can be formalized as follows:
-
-%\begin{equation*}
-%  \begin{aligned}
-%  & \underset{X}{\text{minimize}} & & (\valuationset - \costset)^{T}\cdot\winset\cdot X^{T} \\
-%  & \text{subject to} & & f_i(x) \leq b_i, \; i = 1, \ldots, m.
-%  \end{aligned}
-%\end{equation*}
 
 \begin{equation*}
 \begin{aligned}
@@ -33,3 +29,7 @@ In practice, a player has to allocate a subset of products at the beginning of t
 & & & X_{i} \in \{0,1\} \; i = 1, \ldots, m_{win}. & 
 \end{aligned}
 \end{equation*}
+
+\todo{we begin with problem definition assuming auctions and than relax the auction such that each buyer is allocated to a seller and in case there is a match (the price the buyer is willing to pay is higher that the price limit set by the seller), the buyer gets the product}.
+
+\subsubsection{Estimating $\costset$}

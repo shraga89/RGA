@@ -1,0 +1,68 @@
+
+\documentclass[sigconf,anonymous,review]{acmart}
+
+%%
+%% \BibTeX command to typeset BibTeX logo in the docs
+\AtBeginDocument{%
+	\providecommand\BibTeX{{%
+			\normalfont B\kern-0.5em{\scshape i\kern-0.25em b}\kern-0.8em\TeX}}}
+
+\usepackage[nospace,noadjust]{cite}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{algpseudocode}
+\usepackage{algorithm}
+\usepackage{algorithmicx}
+\usepackage{url}
+\usepackage{caption}
+\usepackage{color}
+
+\newcommand{\greg}[1]{\textcolor{red}{GG: {#1}}} % Greg
+\newcommand{\alex}[1]{\textcolor{green}{AT: {#1}}} % Alex
+\newcommand{\roee}[1]{\textcolor{blue}{RS: {#1}}} % Roee
+\newcommand{\todo}[1]{\textcolor{gray}{{#1}}} % to do
+
+\newcommand{\player}{a}
+\newcommand{\productset}{P}
+\newcommand{\product}{p}
+\newcommand{\costset}{C}
+\newcommand{\cost}{c}
+\newcommand{\winset}{W}
+\newcommand{\win}{w}
+\newcommand{\valuationset}{V}
+\newcommand{\valuation}{v}
+\newcommand{\budget}{B}
+
+
+
+\begin{document}
+	\title{Buying Data using Data: a Buyer's Perspective in a Data Market with Infinite Supply}
+	
+	\begin{abstract}
+	\todo{place holder place holder place holder place holder place holder place holder}
+	\todo{place holder place holder place holder place holder place holder place holder}
+	\todo{place holder place holder place holder place holder place holder place holder}
+	\todo{place holder place holder place holder place holder place holder place holder}
+	\todo{place holder place holder place holder place holder place holder place holder}
+	\todo{place holder place holder place holder place holder place holder place holder}
+	\todo{place holder place holder place holder place holder place holder place holder}
+	\todo{place holder place holder place holder place holder place holder place holder}
+	\end{abstract}
+	\maketitle
+	
+	\section{Introduction}\label{sec:introduction}
+	\input{intro}
+	\section{Data Markets}\label{sec:datamarket}
+	\input{market}
+	\section{Buying Data in a Data Market}\label{sec:model}
+	\input{model}
+	\section{Evaluation}\label{sec:eval}
+	\input{eval}
+	\section{Related Work}\label{sec:related}
+	\input{related}
+	
+	\bibliographystyle{ACM-Reference-Format}
+	\bibliography{refs}
+\end{document}
