@@ -1,5 +1,6 @@
 from abc import abstractmethod
 import numpy as np
+from sklearn.linear_model import LinearRegression
 
 
 class CostStrategy:
@@ -77,3 +78,29 @@ class AggregatedHistoryCostStrategy(CostStrategy):
                 raise ValueError("Enter history argument to strategy cost estimation function")
         except KeyError:
             raise KeyError("key value error in kwargs - check function arguments")
+
+
+class LinearRegressionCostStrategty(CostStrategy):
+    def __init__(self):
+        super(LinearRegressionCostStrategty, self).__init__()
+
+    @staticmethod
+    def create_ds(price_history):
+        X = []
+        y = []
+        for i,price in enumerate(price_history):
+            if i==0:
+                continue
+            X.append([price_history[i-1],])
+            y.append([price,])
+        return np.array(X),np.array(y)
+
+    def cost_estimation(self, **kwargs):
+        price_history = kwargs["price_history"]
+        if not price_history:
+            return np.random.randint(0, int(kwargs["evaluaion"]))
+
+        X,y = self.create_ds(price_history)
+        model = LinearRegression().fit(X,y)
+
+        return model.predict(price_history[-1])
