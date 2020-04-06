@@ -7,7 +7,6 @@
 	\providecommand\BibTeX{{%
 			\normalfont B\kern-0.5em{\scshape i\kern-0.25em b}\kern-0.8em\TeX}}}
 
-\usepackage[nospace,noadjust]{cite}
 \usepackage{amsmath}
 \usepackage{amsfonts}
 \usepackage{graphicx}
@@ -18,6 +17,9 @@
 \usepackage{url}
 \usepackage{caption}
 \usepackage{color}
+\usepackage{paralist}
+
+\newtheorem{example}{Example}
 
 \newcommand{\greg}[1]{\textcolor{red}{GG: {#1}}} % Greg
 \newcommand{\alex}[1]{\textcolor{green}{AT: {#1}}} % Alex
@@ -40,14 +42,14 @@
 \newcommand{\win}{w}
 \newcommand{\valuationset}{V}
 \newcommand{\valuation}{v}
-\newcommand{\budget}{?}
+\newcommand{\budget}{L}
 \newcommand{\horizon}{T}
 
 
 
 
 \begin{document}
-	\title{Buying Data using Data: a Buyer's Perspective in a Data Market with Infinite Supply}
+	\title{Buying Data using Data:\\ a Buyer's Perspective on an Infinite Supply Market}
 	
 	\begin{abstract}
 	\todo{place holder place holder place holder place holder place holder place holder}
@@ -71,6 +73,8 @@
 	\input{eval}
 	\section{Related Work}\label{sec:related}
 	\input{related}
+	\section{Conclusions}\label{sec:con}
+	\input{conc}
 	
 	\bibliographystyle{ACM-Reference-Format}
 	\bibliography{refs}

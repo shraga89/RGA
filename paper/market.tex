@@ -2,12 +2,25 @@
 %\todo{plot out our vision on data markets?}\\
 %\todo{create a figure with an overview of data markets?}\\
 
+
 Next, we layout our data market setting partially following~\cite{castro2020data}.
 
 \subsection{Data Market Model}\label{sec:market_model}
 
-A \emph{data market} $\market$ is a composition of three sets of entities, namely \emph{buyers} $\buyerset$, \emph{sellers} $\sellerset$, and \emph{mediator} \mediator. We shall refer to the first two entities also as the \emph{players} $\playerset = \buyerset\cup\sellerset$ in the market. Players may be individuals or groups (\emph{e.g.,} companies or organizations) interested in trading datasets. We use $\productset$ to denote the set of authorized datasets in $\market$. Usually, a dataset $\product$ is associated with a domain and several of other properties that represent it including \emph{e.g.}, the features it contains. Each buyer $\buyer\in\buyerset$ is interested in a set of datasets $\product_{\buyer}\subseteq\productset$ whereas each seller offers a set of products $\product_{\seller}\subseteq\productset$. The mediator is in charge of the transactions between the different players in the market.
+A \emph{data market} $\market$ is a composition of three sets of entities, namely \emph{buyers} $\buyerset$, \emph{sellers} $\sellerset$, and \emph{mediator} \mediator. We shall refer to the first two entities also as the \emph{players} $\playerset = \buyerset\cup\sellerset$ in the market. Players may be individuals or groups (\emph{e.g.,} companies or organizations) interested in trading datasets. We use $\productset$ to denote the set of authorized datasets in $\market$. Usually, a dataset $\product$ is associated with a domain and several of other properties that represent it including \emph{e.g.}, the features it contains. Each buyer $\buyer\in\buyerset$ is interested in a set of datasets $\product_{\buyer}\subseteq\productset$ whereas each seller offers a set of products $\product_{\seller}\subseteq\productset$. In addition, each player has a budget $\budget_{\player}$, which is updated according to the trasactions of a player. The mediator is in charge of the transactions between the different players in the market.
+
+\begin{example}
+	\roee{complete}
+\end{example}
+
+In what follows, each player $\player\in\playerset$ has a different utility from a dataset, according to which they can set prices. A market is a temporal ecosystem. As such, we assume that the market has a finite horizon $\horizon$ and each interaction between the different entities takes place in a discrete timestamp $t<T$. Each timestamp $t$ represents a set of transactions supervised by the mediator. Players price their products according to...  
 
 \roee{say something about the value of data (find references)}\\
 
-In what follows, each player $\player\in\playerset$ has a different utility from a dataset, according to which they can set prices. A market is a temporal ecosystem. As such, we assume that the market has a finite horizon $\horizon$ and each interaction between the different entities takes place in a discrete timestamp $t<T$.
+A \emph{transaction} is when a buyer $\buyer$ acquires a dataset $\product$ from a seller $\seller$. The buyer pays $p(\product)$, $\budget_{\buyer}$ and $\budget_{\seller}$ are updated, and the buyer is no longer interested in buying $\product$. Note, that the seller is still willing to sell $\product$, as the inventory of a dataset is assumed to be unlimited. Finally, at the end of each timestamp, buyers and sellers update their datasets pricing.
+
+In practice, the player can not simply purchase any product she wishes, even if she has a large enough budget for two primary reasons. First, a the ``buying'' player and the ''selling'' player may not be synchronized (\emph{e.g.,} the seller demands a price that the buyer is not willing to pay). Second, when an auction is in order, the player may not win the auction for the product she wishes to purchase. \roee{say something about auctions}
+
+\subsection{Sellers}
+
+In this paper, we focus on the buyers side, aiming to maximize their utility. In what follows, we describe next the methodology we use to represnet and simulate the behavior of sellers in the marker.
