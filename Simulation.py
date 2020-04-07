@@ -163,7 +163,8 @@ class DataMarketSimulation(Simulation):
             for product in self.product_list:
                 valuation = player.product_values_for_player[product]*(self.horizon-self.turn)
                 cost_estimation[product] = player.cost_estimation_strategy.cost_estimation(agg="last",
-                                                                                           price_history=player.retrieve_price_history(product),evaluaion=valuation)
+                                                                                           price_history=player.retrieve_price_history(product),
+                                                                                           evaluaion=valuation)
                 win_estimation[product] = player.bid_strategy.winner_determination_function_estimation()
             product_choice_mechanism = NaiveKnapsack(player, "")
             relevant_products = product_choice_mechanism.solve(self.turn, self.horizon,cost_estimation)

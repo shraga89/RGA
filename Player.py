@@ -251,6 +251,10 @@ class DataProvider(DataPlayer):
         self.production_prices.append(initial_production_price)
         self.utility_history = {"algorithm": {}, "budget": {}}  # TODO: check if we should remove "algorithm" key
         self.threshold_prices = threshold_values
+        self.selling_strategy = None
+
+    def set_selling_strategy(self, strategy):
+        self.selling_strategy = strategy
 
     def gather_data(self, product):
         gathering_price = self.production_prices[-1][product]
@@ -268,18 +272,21 @@ class DataProvider(DataPlayer):
     def update_budget(self):  # exisits for the sake of possible future directions
         self.budget = self.budget
 
-    def set_selling_price(self, product, price_step=1):
+    def set_selling_price(self, product):
         last_price = self.get_current_selling_price(product)
-        is_transaction_last_turn = 'successful' in self.price_history[
-            (self.price_history['turn'] == self.price_history['turn'].max()) &
-            (self.price_history['product'] == product)]['outcome'].tolist()
-        possible_to_increase = last_price + price_step <= MAXIMAL_SELLING_PRICE
-        possible_to_decrease = last_price - price_step >= self.price_limits[(product, 'selling_price')]
-        if is_transaction_last_turn and possible_to_increase:
-            # self.current_prices[(product, 'selling_price')] += price_step
-            return
-        elif possible_to_decrease:
-            self.current_prices[(product, 'selling_price')] -= price_step
+
+    # def set_selling_price(self, product, price_step=1):
+    #     last_price = self.get_current_selling_price(product)
+    #     is_transaction_last_turn = 'successful' in self.price_history[
+    #         (self.price_history['turn'] == self.price_history['turn'].max()) &
+    #         (self.price_history['product'] == product)]['outcome'].tolist()
+    #     possible_to_increase = last_price + price_step <= MAXIMAL_SELLING_PRICE
+    #     possible_to_decrease = last_price - price_step >= self.price_limits[(product, 'selling_price')]
+    #     if is_transaction_last_turn and possible_to_increase:
+    #         # self.current_prices[(product, 'selling_price')] += price_step
+    #         return
+    #     elif possible_to_decrease:
+    #         self.current_prices[(product, 'selling_price')] -= price_step
 
     def update_utility_dict(self, turn):
         budget_utility = self.utility.calculate_budget_utility(self.budget)
