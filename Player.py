@@ -372,3 +372,6 @@ class DataConsumer(DataPlayer):
 
     def update_budget(self):
         self.budget += self.accumulated_algorithm_utility()
+
+    def determine_relevant_products(self):
+        pass #ahosharmuta

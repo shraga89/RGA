@@ -155,60 +155,101 @@ class DataMarketSimulation(Simulation):
             self.turn += 1
         self.print_end_result(False, 'sim.csv', None)
 
-    def create_bids(self):
-        bids = {}
-        for player in set(self.players['buyers'].values()):
-            cost_estimation = {}
-            win_estimation = {}
-            for product in self.product_list:
-                valuation = player.product_values_for_player[product]*(self.horizon-self.turn)
-                cost_estimation[product] = player.cost_estimation_strategy.cost_estimation(agg="last",
-                                                                                           price_history=player.retrieve_price_history(product),
-                                                                                           evaluaion=valuation)
-                win_estimation[product] = player.bid_strategy.winner_determination_function_estimation()
-            product_choice_mechanism = NaiveKnapsack(player, "")
-            relevant_products = product_choice_mechanism.solve(self.turn, self.horizon,cost_estimation)
-            player.relevant_products = relevant_products
-            for product in relevant_products:
-                bids[(player, product)] = min(player.bid_strategy.bid_strategy(type_of_auction='second',
-                                                                               valuation=(
-                                                                                           player.product_values_for_player[
-                                                                                               product]
-                                                                                           * (
-                                                                                                       self.horizon - self.turn))),
-                                              player.budget)
-        return bids
+    # def create_bids(self):
+    #     bids = {}
+    #     for player in set(self.players['buyers'].values()):
+    #         cost_estimation = {}
+    #         win_estimation = {}
+    #         for product in self.product_list:
+    #             valuation = player.product_values_for_player[product]*(self.horizon-self.turn)
+    #             cost_estimation[product] = player.cost_estimation_strategy.cost_estimation(agg="last",
+    #                                                                                        price_history=player.retrieve_price_history(product),
+    #                                                                                        evaluaion=valuation)
+    #             win_estimation[product] = player.bid_strategy.winner_determination_function_estimation()
+    #         product_choice_mechanism = NaiveKnapsack(player, "")
+    #         relevant_products = product_choice_mechanism.solve(self.turn, self.horizon,cost_estimation)
+    #         player.relevant_products = relevant_products
+    #         for product in relevant_products:
+    #             bids[(player, product)] = min(player.bid_strategy.bid_strategy(type_of_auction='second',
+    #                                                                            valuation=(
+    #                                                                                        player.product_values_for_player[
+    #                                                                                            product]
+    #                                                                                        * (
+    #                                                                                                    self.horizon - self.turn))),
+    #                                           player.budget)
+    #     return bids
+    #
+    # def run_one_step(self):
+    #     bids = self.create_bids()
+    #     self.create_inventory()
+    #     for product in self.product_list:
+    #         relevant_bids = {}
+    #         for player, some_product in bids.keys():
+    #             if some_product == product:
+    #                 relevant_bids[(player, product)] = bids[(player, product)]
+    #         matching = self.determine_matching(product, relevant_bids)
+    #         self.run_auction_for_single_product(product, matching, relevant_bids)
+    #     for player in set(self.players['buyers'].values()).union(self.players['sellers'].values()):
+    #         player.update_history(self.history[self.history['turn'] == self.turn])
+    #         player.set_current_prices()
+    #         # player.update_utility_dict(self.turn)
+    #
+    # def determine_matching(self, product, relevant_bids):
+    #     all_sellers = self.players["sellers"].values()
+    #     relevant_sellers = [seller for seller in all_sellers if seller.products_in_inventory[-1][product] > 0]
+    #     relevant_buyers = [buyer for buyer, product in relevant_bids]
+    #     matching = self.create_random_matching_to_auctions(relevant_buyers, relevant_sellers)
+    #     return matching
+    #
+    # def create_random_matching_to_auctions(self, buyers, sellers):
+    #     matching = {seller: [] for seller in sellers}
+    #     shuffle(buyers)
+    #     shuffle(sellers)
+    #     for buyer in buyers:
+    #         relevant_seller = sellers[randint(0, len(sellers) - 1)]
+    #         matching[relevant_seller].append(buyer)
+    #     return matching
 
     def run_one_step(self):
-        bids = self.create_bids()
-        self.create_inventory()
+        relevant_buyers = {}
+        for buyer in set(self.players['buyers'].values()):
+            relevant_products = buyer.determine_relevant_products()
+            for product in relevant_products:
+                if not relevant_buyers[product]:
+                    relevant_buyers[product] = [buyer]
+                else:
+                    relevant_buyers[product].append(buyer)
+
         for product in self.product_list:
-            relevant_bids = {}
-            for player, some_product in bids.keys():
-                if some_product == product:
-                    relevant_bids[(player, product)] = bids[(player, product)]
-            matching = self.determine_matching(product, relevant_bids)
-            self.run_auction_for_single_product(product, matching, relevant_bids)
-        for player in set(self.players['buyers'].values()).union(self.players['sellers'].values()):
-            player.update_history(self.history[self.history['turn'] == self.turn])
-            player.set_current_prices()
-            # player.update_utility_dict(self.turn)
+            self.run_one_step_for_single_product(product, relevant_buyers)
 
-    def determine_matching(self, product, relevant_bids):
-        all_sellers = self.players["sellers"].values()
-        relevant_sellers = [seller for seller in all_sellers if seller.products_in_inventory[-1][product] > 0]
-        relevant_buyers = [buyer for buyer, product in relevant_bids]
-        matching = self.create_random_matching_to_auctions(relevant_buyers, relevant_sellers)
-        return matching
 
-    def create_random_matching_to_auctions(self, buyers, sellers):
-        matching = {seller: [] for seller in sellers}
-        shuffle(buyers)
-        shuffle(sellers)
-        for buyer in buyers:
-            relevant_seller = sellers[randint(0, len(sellers) - 1)]
-            matching[relevant_seller].append(buyer)
-        return matching
+    def run_one_step_for_single_product(self, product, relevant_buyers):
+
+        sellers_list = [seller_id for seller_id, seller in self.players['sellers'].items()
+                        if seller.has_product_available(product)]
+        buyers_dict = relevant_buyers
+
+
+        #TODO: finish this bullshit
+
+        # while buyers_list:
+        #     buyer = random.sample(buyers_list, 1)[0]
+        #     random.shuffle(buyers_dict[buyer])
+        #     seller = buyers_dict[buyer].pop()
+        #     if self.create_transaction(self.players['sellers'][seller], self.players['buyers'][buyer], product):
+        #         buyers_dict.pop(buyer)
+        #         buyers_list.remove(buyer)
+        #         sellers_list.remove(seller)
+        #         for a_buyer, available_sellers in list(buyers_dict.items()):
+        #             try:
+        #                 available_sellers.remove(seller)
+        #             except ValueError:
+        #                 pass
+        #     for a_buyer, available_sellers in list(buyers_dict.items()):
+        #         if len(available_sellers) == 0:
+        #             buyers_dict.pop(a_buyer)
+        #     buyers_list = list(buyers_dict.keys())
 
     def run_auction_for_single_product(self, product, matching, bids):
         for seller in matching:
