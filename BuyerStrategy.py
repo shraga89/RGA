@@ -14,6 +14,10 @@ class CostStrategy:
 
 class BidStrategy:
 
+    """
+    TODO: Bids are irrelevant, let the agent bid its cost estimation!
+    """
+
     def __init__(self):
         pass
 

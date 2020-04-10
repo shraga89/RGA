@@ -2,7 +2,7 @@ from abc import abstractmethod
 import random
 import pandas as pd
 from Knapsack import NaiveKnapsack
-from Contract import Auction
+from Contract import *
 from random import shuffle, randint
 
 
@@ -221,14 +221,24 @@ class DataMarketSimulation(Simulation):
                     relevant_buyers[product].append(buyer)
 
         for product in self.product_list:
-            self.run_one_step_for_single_product(product, relevant_buyers)
-
+            self.run_one_step_for_single_product(product, relevant_buyers[product])
 
     def run_one_step_for_single_product(self, product, relevant_buyers):
-
+        contract = SimpleSellingContract()
         sellers_list = [seller_id for seller_id, seller in self.players['sellers'].items()
                         if seller.has_product_available(product)]
-        buyers_dict = relevant_buyers
+        buyers_dict = {buyer: list(sellers_list) for buyer in relevant_buyers}
+        while buyers_dict:
+            for buyer in list(buyers_dict.keys()):
+                matched_seller = random.choice(buyers_dict[buyer])
+                if contract.check_prerequisites([matched_seller, buyer], product):
+                    contract.enact_contract([matched_seller, buyer], product)
+                    buyers_dict.pop(buyer)
+                else:
+                    buyers_dict[buyer].remove(matched_seller)
+                    if not buyers_dict[buyer]:
+                        buyers_dict.pop(buyer)
+
 
 
         #TODO: finish this bullshit

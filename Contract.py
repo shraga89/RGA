@@ -12,7 +12,7 @@ class Contract:
         pass
 
     @abstractmethod
-    def enact_contact(self, stakeholders: list, product):
+    def enact_contract(self, stakeholders: list, product):
         pass
 
 
@@ -31,7 +31,7 @@ class SimpleSellingContract(Contract):
         else:
             return True, 'successful'
 
-    def enact_contact(self, stakeholders: list, product):
+    def enact_contract(self, stakeholders: list, product):
         seller, buyer = stakeholders[0], stakeholders[1]
         actual_price = seller.get_current_selling_price(product)
         buyer.add_inventory(product, 1)
