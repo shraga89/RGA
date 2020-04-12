@@ -207,7 +207,7 @@ class RationalPlayer(Player):
 
 class DataPlayer(Player):
 
-    def __init__(self, id, _type, budget, products, relevant_products, utility):
+    def __init__(self, id, _type, budget, products, relevant_products, utility,horizon):
         super().__init__(id, _type, budget, products)
         # TODO: UPDATE price_history
         self.price_history = pd.DataFrame(columns=['turn', 'buyer', 'seller', 'product', 'outcome',
@@ -218,6 +218,7 @@ class DataPlayer(Player):
         self.consumption_utilities = []
         self.relevant_products = relevant_products
         self.utility = utility  # utility class object
+        self.horizon = horizon
 
     def set_initial_prices(self, product, method='random'):
         self.set_random_initial_prices(product)
@@ -246,8 +247,8 @@ class DataPlayer(Player):
 class DataProvider(DataPlayer):
 
     def __init__(self, id, budget, products, relevant_products, initial_production_price: dict, utility,
-                 threshold_values):
-        super().__init__(id, 'seller', budget, products, relevant_products, utility)
+                 threshold_values,horizon):
+        super().__init__(id, 'seller', budget, products, relevant_products, utility,horizon)
         self.production_prices.append(initial_production_price)
         self.utility_history = {"algorithm": {}, "budget": {}}  # TODO: check if we should remove "algorithm" key
         self.threshold_prices = threshold_values
@@ -298,8 +299,8 @@ class DataProvider(DataPlayer):
 
 class DataConsumer(DataPlayer):
 
-    def __init__(self, id, budget, products, relevant_products, initial_consumption_utility: dict, utility):
-        super().__init__(id, 'buyer', budget, products, relevant_products, utility)
+    def __init__(self, id, budget, products, relevant_products, initial_consumption_utility: dict, utility,horizon):
+        super().__init__(id, 'buyer', budget, products, relevant_products, utility,horizon)
         self.consumption_utilities.append(initial_consumption_utility)
         self.utility_history = {"algorithm": {}, "budget": {}}
         self.product_turn_bought = {}  # what turn the product was bought
@@ -336,18 +337,24 @@ class DataConsumer(DataPlayer):
         return product in self.relevant_products and self.budget >= self.get_current_buying_price(product) \
                and self.products_in_inventory[-1][product] == 0
 
+    # def set_buying_price(self, product, price_step=1):
+    #     last_price = self.get_current_buying_price(product)
+    #     is_transaction_last_turn = 'successful' in self.price_history[
+    #         (self.price_history['turn'] == self.price_history['turn'].max()) &
+    #         (self.price_history['product'] == product)]['outcome'].tolist()
+    #     possible_to_increase = last_price + price_step <= self.price_limits[(product, 'buying_price')]
+    #     possible_to_decrease = last_price - price_step >= MINIMAL_BUYING_PRICE
+    #     if is_transaction_last_turn and possible_to_decrease:
+    #         # self.current_prices[(product, 'buying_price')] -= price_step
+    #         self.current_prices[(product, 'buying_price')] = 0
+    #     elif possible_to_increase:
+    #         self.current_prices[(product, 'buying_price')] += price_step
+
     def set_buying_price(self, product, price_step=1):
-        last_price = self.get_current_buying_price(product)
-        is_transaction_last_turn = 'successful' in self.price_history[
-            (self.price_history['turn'] == self.price_history['turn'].max()) &
-            (self.price_history['product'] == product)]['outcome'].tolist()
-        possible_to_increase = last_price + price_step <= self.price_limits[(product, 'buying_price')]
-        possible_to_decrease = last_price - price_step >= MINIMAL_BUYING_PRICE
-        if is_transaction_last_turn and possible_to_decrease:
-            # self.current_prices[(product, 'buying_price')] -= price_step
-            self.current_prices[(product, 'buying_price')] = 0
-        elif possible_to_increase:
-            self.current_prices[(product, 'buying_price')] += price_step
+        price_history = self.price_history[self.price_history['product']==product]
+        evaluation = self.consumption_utilities[product]*(self.horizon-self.self.price_history['turn'].max())
+        self.current_prices[(product, 'buying_price')] = self.cost_estimation_strategy.cost_estimation(price_history = price_history,evaluation = evaluation)
+
 
     def update_utility_dict(self, turn):
         owned_products = [p for p in self.products_in_inventory[-1] if self.products_in_inventory[-1][p] > 0]

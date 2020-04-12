@@ -2,7 +2,7 @@ import Player as pl
 import random
 import Product as pr
 from Utility import DataPlayerUtility
-from Strategy import NashEquilibriumBidStrategy, AggregatedHistoryCostStrategy
+from BuyerStrategy import NashEquilibriumBidStrategy, AggregatedHistoryCostStrategy
 
 
 def set_initial_production_price(products, constant_production_price):
@@ -56,7 +56,7 @@ def generate_players(players_type, number_of_buyers, number_of_sellers,
 def generate_data_players(number_of_buyers, number_of_sellers, minimal_buying_budget, maximal_buying_budget,
                           minimal_selling_budget, maximal_selling_budget, constant_production_price,
                           constant_consumption_utility, number_of_products_per_buyer, number_of_products_per_seller,
-                          product_list, decay_factor, minimal_selling_price, maximal_selling_price):
+                          product_list, decay_factor, minimal_selling_price, maximal_selling_price,horizon):
     players = {'buyers': {}, 'sellers': {}}
     for i in range(number_of_buyers):
         utility = DataPlayerUtility(number_of_buyers, decay_factor)
@@ -67,7 +67,7 @@ def generate_data_players(number_of_buyers, number_of_sellers, minimal_buying_bu
         initial_consumption_utility = set_initial_consumption_utility(product_list, constant_consumption_utility)
         relevant_products = random.sample(product_list, number_of_products_per_buyer)
         new_player = pl.DataConsumer(player_id, budget, product_list, relevant_products, initial_consumption_utility,
-                                     utility)
+                                     utility,horizon)
 
         new_player.set_cost_estimation_strategy(cost_estimation_strategy)
         new_player.set_bid_strategy(bid_strategy)
@@ -81,7 +81,7 @@ def generate_data_players(number_of_buyers, number_of_sellers, minimal_buying_bu
         relevant_products = random.sample(product_list, number_of_products_per_seller)
         threshold_values = set_threshold_values(relevant_products, minimal_selling_price, maximal_selling_price)
         new_player = pl.DataProvider(player_id, budget, product_list, relevant_products, initial_production_price,
-                                     utility, threshold_values)
+                                     utility, threshold_values,horizon)
         players['sellers'][player_id] = new_player
     return players
 
