@@ -109,6 +109,5 @@ class SecondPriceAuction(Auction):
 
 if __name__=="__main__":
     my_auction = SecondPriceAuction()
-    # bids = {"greg":3, "alex":2,'shraga':1}
     bids = {}
     print(my_auction.run_auction(bids, threshold_price = 1.5))
