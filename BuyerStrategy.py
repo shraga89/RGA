@@ -102,7 +102,7 @@ class LinearRegressionCostStrategty(CostStrategy):
     def cost_estimation(self, **kwargs):
         price_history = kwargs["price_history"]
         if not price_history:
-            return np.random.randint(0, int(kwargs["evaluaion"]))
+            return np.random.randint(0, int(kwargs["evaluation"]))
 
         X,y = self.create_ds(price_history)
         model = LinearRegression().fit(X,y)

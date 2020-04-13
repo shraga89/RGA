@@ -138,8 +138,7 @@ class DataMarketSimulation(Simulation):
 
     def __init__(self, horizon, product_list, players_dict, contract: Contract):
         super().__init__(horizon, product_list, players_dict)
-        self.history = pd.DataFrame(columns=['turn', 'buyer', 'seller', 'product', 'actual_price',
-                                             'threshold_price', 'number_of_competitors'])
+        self.history = pd.DataFrame(columns=['turn', 'buyer', 'seller', 'product', 'actual_price'])
         self.turn = 0
         self.contract = contract
 
@@ -155,13 +154,12 @@ class DataMarketSimulation(Simulation):
             self.turn += 1
         self.print_end_result(False, 'sim.csv', None)
 
-
     def run_one_step(self):
         relevant_buyers = {}
         for buyer in set(self.players['buyers'].values()):
-            relevant_products = buyer.determine_relevant_products(self.turn)
+            relevant_products = buyer.determine_relevant_products(self.turn, self.players,self.history)
             for product in relevant_products:
-                if not relevant_buyers[product]:
+                if product not in relevant_buyers:
                     relevant_buyers[product] = [buyer]
                 else:
                     relevant_buyers[product].append(buyer)
@@ -170,40 +168,31 @@ class DataMarketSimulation(Simulation):
             self.run_one_step_for_single_product(product, relevant_buyers[product])
 
     def run_one_step_for_single_product(self, product, relevant_buyers):
-        sellers_list = [seller_id for seller_id, seller in self.players['sellers'].items()
+        sellers_list = [seller for seller_id, seller in self.players['sellers'].items()
                         if seller.has_product_available(product)]
         buyers_dict = {buyer: list(sellers_list) for buyer in relevant_buyers}
         while buyers_dict:
             for buyer in list(buyers_dict.keys()):
                 matched_seller = random.choice(buyers_dict[buyer])
-                if self.contract.check_prerequisites([matched_seller, buyer], product):
-                    self.contract.enact_contract([matched_seller, buyer], product)
+                transaction_indicator, outcome = self.contract.check_prerequisites([matched_seller, buyer], product)
+                price = None
+                if transaction_indicator:
+                    price = self.contract.enact_contract([matched_seller, buyer], product)
                     buyers_dict.pop(buyer)
                 else:
                     buyers_dict[buyer].remove(matched_seller)
                     if not buyers_dict[buyer]:
                         buyers_dict.pop(buyer)
 
+                self.add_transaction_to_history(buyer, matched_seller, product, price)
 
-    def add_transaction_to_history(self, buyer, seller, product, price, threshold_price, number_of_competitors):
-        if not buyer:
-            self.history.append({"turn": self.turn,
-                                 'buyer': None,
-                                 'seller': seller.get_id(),
-                                 'product': product,
-                                 'actual_price': None,
-                                 'threshold_price': threshold_price,
-                                 'number_of_competitors': number_of_competitors},
-                                ignore_index=True)
-        else:
-            self.history.append({"turn": self.turn,
-                                 'buyer': buyer,
-                                 'seller': seller.get_id(),
-                                 'product': product,
-                                 'actual_price': price,
-                                 'threshold_price': threshold_price,
-                                 'number_of_competitors': number_of_competitors},
-                                ignore_index=True)
+    def add_transaction_to_history(self, buyer, seller, product, price):
+        self.history = self.history.append({"turn": self.turn,
+                             'buyer': buyer,
+                             'seller': seller.get_id(),
+                             'product': product,
+                             'actual_price': price},
+                            ignore_index=True)
 
 
     def visualize(self):
