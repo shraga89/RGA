@@ -40,13 +40,12 @@ class NaiveKnapsack(ExtendedKnapsack):
     def __init__(self, player, products, distribution: str = "uniform"):
         super().__init__(player, products, distribution)
 
-    def solve(self, turn, total_steps, costs) -> set:
+    def solve(self, turn, total_steps, costs, valuations) -> set:
 
         model = Model()
         products = self.products
         budget = self.player.budget
         print(budget)
-        valuations = self.player.product_values_for_player
         # costs, _, bids = self.player.get_estimations_for_optimization(turn=turn, total_steps=total_steps)
 
         x = {}

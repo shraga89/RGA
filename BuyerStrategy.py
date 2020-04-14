@@ -96,15 +96,15 @@ class LinearRegressionCostStrategty(CostStrategy):
             if i==0:
                 continue
             X.append([price_history[i-1],])
-            y.append([price,])
+            y.append(price)
         return np.array(X),np.array(y)
 
     def cost_estimation(self, **kwargs):
         price_history = kwargs["price_history"]
-        if not price_history:
-            return np.random.randint(0, int(kwargs["evaluation"]))
+        if not price_history or len(price_history)==1:
+            return [np.random.randint(0, int(kwargs["evaluation"])),]
 
         X,y = self.create_ds(price_history)
         model = LinearRegression().fit(X,y)
 
-        return model.predict(price_history[-1])
+        return model.predict([[price_history[-1],]])

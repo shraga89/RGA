@@ -291,22 +291,19 @@ class DataConsumer(DataPlayer):
                          strategy):  # sets the strategy class of player - enables to change strategies during simulation
         self.bid_strategy = strategy
 
-    def determine_product_cost(self, product, rellevant_sellers, turn,history):
+    def determine_product_cost(self, product, rellevant_sellers, turn,history,evaluations):
         costs = []
-        if turn>1:
-            x=1
         for seller in rellevant_sellers:
             df = history[
-                (history["product"] == product) & (history["seller"] == seller) & (history["actual_price"] is not None)][
+                (history["product"] == product) & (history["seller"] == seller) & (history["actual_price"].notnull())][
                 ["turn", "actual_price"]]
             if df.empty:
                 seller_price_history = []
             else:
-                seller_price_history = df.apply(pd.to_numeric).groupby("turn").mean()["actual_price"]
-            evaluation = self.consumption_utilities[-1][product] * (self.horizon - turn)
+                seller_price_history = df.apply(pd.to_numeric).groupby("turn").mean()["actual_price"].tolist()
             cost = self.cost_estimation_strategy.cost_estimation(price_history=seller_price_history,
-                                                                 evaluation=evaluation)
-            costs.append(cost)
+                                                                 evaluation=evaluations[product])
+            costs.append(cost[0])
         minimum_cost = min(costs)
         self.set_buying_price(product, minimum_cost)
         return minimum_cost
@@ -326,13 +323,15 @@ class DataConsumer(DataPlayer):
 
     def determine_relevant_products(self, turn,players,history):
         costs = {}
-        knapsack = NaiveKnapsack(self,self.all_existing_products)
-        for product in self.all_existing_products:
+        products_not_owned = [product for product in self.all_existing_products if self.products_in_inventory[-1][product]==0]
+        knapsack = NaiveKnapsack(self,products_not_owned)
+        evaluations = {product:self.consumption_utilities[-1][product] * (self.horizon - turn) for product in products_not_owned}
+        for product in products_not_owned:
             relevant_sellers = [seller_id for seller_id, seller in players['sellers'].items()
                                 if seller.has_product_available(product)]
             if not relevant_sellers:
                 continue
-            product_cost = self.determine_product_cost(product, relevant_sellers,turn,history)
+            product_cost = self.determine_product_cost(product, relevant_sellers,turn,history,evaluations)
             costs[product] = product_cost
-        relevant_products = knapsack.solve(turn, self.horizon, costs)
+        relevant_products = knapsack.solve(turn, self.horizon, costs,evaluations)
         return relevant_products
