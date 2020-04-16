@@ -41,8 +41,8 @@ class NaiveKnapsack(ExtendedKnapsack):
         super().__init__(player, products, distribution)
 
     def solve(self, turn, total_steps, costs, valuations) -> set:
-
         model = Model()
+        model.setParam("OutputFlag",0)
         products = self.products
         budget = self.player.budget
         print(budget)

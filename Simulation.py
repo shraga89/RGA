@@ -165,6 +165,8 @@ class DataMarketSimulation(Simulation):
                     relevant_buyers[product].append(buyer)
 
         for product in self.product_list:
+            if product not in relevant_buyers:
+                continue
             self.run_one_step_for_single_product(product, relevant_buyers[product])
 
     def run_one_step_for_single_product(self, product, relevant_buyers):

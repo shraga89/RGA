@@ -323,7 +323,7 @@ class DataConsumer(DataPlayer):
 
     def determine_relevant_products(self, turn,players,history):
         costs = {}
-        products_not_owned = [product for product in self.all_existing_products if self.products_in_inventory[-1][product]==0]
+        products_not_owned = [product for product in self.all_existing_products if self.products_in_inventory[-1][product]<=0]
         knapsack = NaiveKnapsack(self,products_not_owned)
         evaluations = {product:self.consumption_utilities[-1][product] * (self.horizon - turn) for product in products_not_owned}
         for product in products_not_owned:
