@@ -311,7 +311,9 @@ class DataConsumer(DataPlayer):
         pass
 
     def update_budget(self):
-        self.budget += self.accumulated_algorithm_utility()
+        owned_product = [product for product in self.all_existing_products if self.products_in_inventory[-1][product]>0]
+        for product in owned_product:
+            self.budget += self.valuations[product]
 
     def determine_relevant_products(self, turn,players,history):
         costs = {}

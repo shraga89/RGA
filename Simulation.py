@@ -152,6 +152,7 @@ class DataMarketSimulation(Simulation):
     def run_one_step(self):
         relevant_buyers = {}
         for buyer in set(self.players['buyers'].values()):
+            buyer.update_budget() # This is done prior to the round in order to count only product purchased in previous rounds
             relevant_products = buyer.determine_relevant_products(self.turn, self.players,self.history)
             for product in relevant_products:
                 if product not in relevant_buyers:
