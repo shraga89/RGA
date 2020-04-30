@@ -315,6 +315,13 @@ class DataConsumer(DataPlayer):
         for product in owned_product:
             self.budget += self.valuations[product]
 
+    def get_owned_product_repr(self):
+        repr = ""
+        owned_products = [product for product in self.all_existing_products if self.products_in_inventory[-1][product]>0]
+        for product in owned_products:
+            repr+=str(product)+" "
+        return repr
+
     def determine_relevant_products(self, turn,players,history):
         costs = {}
         products_not_owned = [product for product in self.all_existing_products if self.products_in_inventory[-1][product]<=0]

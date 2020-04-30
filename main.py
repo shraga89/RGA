@@ -10,11 +10,7 @@ def main():
     products_list = generate_data_products(NUMBER_OF_PRODUCTS, MINIMAL_NUMBER_OF_EXAMPLES,
                                            MAXIMAL_NUMBER_OF_EXAMPLES, MINIMAL_NUMBER_OF_FEATURES,
                                            MAXIMAL_NUMBER_OF_FEATURES)
-    # players = generate_data_players(BUYERS_NUMBER, SELLERS_NUMBER, MINIMAL_BUYING_BUDGET,
-    #                                 MAXIMAL_BUYING_BUDGET, MINIMAL_SELLING_BUDGET, MAXIMAL_SELLING_BUDGET,
-    #                                 CONSTANT_PRODUCTION_PRICE, CONSTANT_CONSUMPTION_UTILITY,
-    #                                 NUMBER_OF_PRODUCTS_PER_BUYER, NUMBER_OF_PRODUCTS_PER_SELLER,
-    #                                 products_list, DECAY_FACTOR, MINIMAL_SELLING_PRICE, MAXIMAL_SELLING_PRICE,TIME_HORIZON)
+
     players = {"buyers":{},"sellers":{}}
     types_of_buyers = [LinearRegressionCostStrategty(), AggregatedHistoryCostStrategy("mean"),
                        AggregatedHistoryCostStrategy("median"), AggregatedHistoryCostStrategy("max"),

@@ -134,6 +134,7 @@ class DataMarketSimulation(Simulation):
     def __init__(self, horizon, product_list, players_dict, contract: Contract):
         super().__init__(horizon, product_list, players_dict)
         self.history = pd.DataFrame(columns=['turn', 'buyer', 'seller', 'product', 'actual_price','budget'])
+        self.budget_history = pd.DataFrame(columns=['turn', 'buyer','budget','owned_products'])
         self.turn = 0
         self.contract = contract
 
@@ -142,12 +143,18 @@ class DataMarketSimulation(Simulation):
             for product in seller.relevant_products:
                 seller.gather_data(product)
 
+
+    def print_budget_results(self,fname):
+        print_df = self.budget_history.copy()
+        print_df.to_csv(fname)
+
     def run_simulation(self,offset):
         for t in range(self.horizon):
             self.run_one_step()
             self.print_end_result(True, None, self.turn)
             self.turn += 1
         self.print_end_result(False, 'sim'+str(offset)+'.csv',None)
+        self.print_budget_results("budget_results_"+str(offset)+".csv")
 
     def run_one_step(self):
         relevant_buyers = {}
@@ -164,6 +171,14 @@ class DataMarketSimulation(Simulation):
             if product not in relevant_buyers:
                 continue
             self.run_one_step_for_single_product(product, relevant_buyers[product])
+
+        for buyer in set(self.players['buyers'].values()):
+
+            self.budget_history = self.budget_history.append({"turn":self.turn,
+                                                              "buyer":buyer.get_id(),
+                                                              "budget":buyer.budget,
+                                                              'owned_products':buyer.get_owned_product_repr()
+                                                              },ignore_index=True)
 
     def run_one_step_for_single_product(self, product, relevant_buyers):
         sellers_list = [seller for seller_id, seller in self.players['sellers'].items()
