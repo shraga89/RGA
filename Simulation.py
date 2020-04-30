@@ -24,15 +24,10 @@ class Simulation:
     def print_end_result(self, success_only=True, export=None, turn=None):
         print_df = self.history.copy()
         if type(turn) == int:
-            print(f"turn number {turn}")
-            print("-------------------------")
             print_df = print_df[print_df['turn'] == turn]
         else:
-            print(f"full horizon")
             print("-------------------------")
-        # if success_only:
-        #     print_df = print_df[print_df['outcome'] == 'successful']
-        print(print_df.to_string() if len(print_df) > 0 else '')
+        # print(print_df.to_string() if len(print_df) > 0 else '')
         if export:
             print_df.to_csv(export)
 
@@ -138,7 +133,7 @@ class DataMarketSimulation(Simulation):
 
     def __init__(self, horizon, product_list, players_dict, contract: Contract):
         super().__init__(horizon, product_list, players_dict)
-        self.history = pd.DataFrame(columns=['turn', 'buyer', 'seller', 'product', 'actual_price'])
+        self.history = pd.DataFrame(columns=['turn', 'buyer', 'seller', 'product', 'actual_price','budget'])
         self.turn = 0
         self.contract = contract
 
@@ -147,12 +142,12 @@ class DataMarketSimulation(Simulation):
             for product in seller.relevant_products:
                 seller.gather_data(product)
 
-    def run_simulation(self):
+    def run_simulation(self,offset):
         for t in range(self.horizon):
             self.run_one_step()
             self.print_end_result(True, None, self.turn)
             self.turn += 1
-        self.print_end_result(False, 'sim.csv', None)
+        self.print_end_result(False, 'sim'+str(offset)+'.csv',None)
 
     def run_one_step(self):
         relevant_buyers = {}
@@ -190,10 +185,11 @@ class DataMarketSimulation(Simulation):
 
     def add_transaction_to_history(self, buyer, seller, product, price):
         self.history = self.history.append({"turn": self.turn,
-                             'buyer': buyer,
+                             'buyer': buyer.get_id(),
                              'seller': seller.get_id(),
                              'product': product,
-                             'actual_price': price},
+                             'actual_price': price,
+                             'budget':buyer.budget},
                             ignore_index=True)
 
 

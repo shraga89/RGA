@@ -53,8 +53,9 @@ class NashEquilibriumBidStrategy(BidStrategy):
 
 
 class AggregatedHistoryCostStrategy(CostStrategy):
-    def __init__(self):
+    def __init__(self,aggregation):
         super(AggregatedHistoryCostStrategy, self).__init__()
+        self.aggregation = aggregation
 
     def cost_estimation(self, **kwargs):
         """
@@ -64,10 +65,10 @@ class AggregatedHistoryCostStrategy(CostStrategy):
         :return:
         """
         try:
-            aggregation = kwargs["agg"]
+            aggregation = self.aggregation
             price_history = kwargs["price_history"]
             if not price_history:
-                return np.random.randint(0, int(kwargs["evaluaion"]))
+                return np.random.randint(0, int(kwargs["evaluation"]))
             if aggregation == "mean":
                 return np.mean(price_history)
             elif aggregation == "median":
@@ -102,9 +103,9 @@ class LinearRegressionCostStrategty(CostStrategy):
     def cost_estimation(self, **kwargs):
         price_history = kwargs["price_history"]
         if not price_history or len(price_history)==1:
-            return [np.random.randint(0, int(kwargs["evaluation"])),]
+            return np.random.randint(0, int(kwargs["evaluation"]))
 
         X,y = self.create_ds(price_history)
         model = LinearRegression().fit(X,y)
 
-        return model.predict([[price_history[-1],]])
+        return model.predict([[price_history[-1],]])[0]

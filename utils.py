@@ -2,7 +2,7 @@ import Player as pl
 import random
 import Product as pr
 from BuyerStrategy import NashEquilibriumBidStrategy, AggregatedHistoryCostStrategy, LinearRegressionCostStrategty
-
+from SellerStrategy import AdaptiveSellerStrategy,LinearSellerStrategy
 
 def set_initial_production_price(products, constant_production_price):
     initial_production_prices = dict()
@@ -52,35 +52,65 @@ def generate_players(players_type, number_of_buyers, number_of_sellers,
     return players
 
 
-def generate_data_players(number_of_buyers, number_of_sellers, minimal_buying_budget, maximal_buying_budget,
-                          minimal_selling_budget, maximal_selling_budget, constant_production_price,
-                          constant_consumption_utility, number_of_products_per_buyer, number_of_products_per_seller,
-                          product_list, decay_factor, minimal_selling_price, maximal_selling_price,horizon):
-    players = {'buyers': {}, 'sellers': {}}
+# def generate_data_players(number_of_buyers, number_of_sellers, minimal_buying_budget, maximal_buying_budget,
+#                           minimal_selling_budget, maximal_selling_budget, constant_production_price,
+#                           constant_consumption_utility, number_of_products_per_buyer, number_of_products_per_seller,
+#                           product_list, decay_factor, minimal_selling_price, maximal_selling_price,horizon):
+#     players = {'buyers': {}, 'sellers': {}}
+#     for i in range(number_of_buyers):
+#         # cost_estimation_strategy = AggregatedHistoryCostStrategy()
+#         cost_estimation_strategy = LinearRegressionCostStrategty()
+#         bid_strategy = NashEquilibriumBidStrategy()
+#         player_id = 'buyer_' + str(i)
+#         budget = generate_random_budget(minimal_buying_budget, maximal_buying_budget)
+#         initial_consumption_utility = set_initial_consumption_utility(product_list, constant_consumption_utility)
+#         new_player = pl.DataConsumer(player_id, budget, product_list, initial_consumption_utility,
+#                                      horizon)
+#
+#         new_player.set_cost_estimation_strategy(cost_estimation_strategy)
+#         new_player.set_bid_strategy(bid_strategy)
+#
+#         players['buyers'][player_id] = new_player
+#     for i in range(number_of_sellers):
+#         player_id = 'seller_' + str(i)
+#         budget = generate_random_budget(minimal_selling_budget, maximal_selling_budget)
+#         initial_production_price = set_initial_production_price(product_list, constant_production_price)
+#         relevant_products = random.sample(product_list, number_of_products_per_seller)
+#         threshold_values = set_threshold_values(relevant_products, minimal_selling_price, maximal_selling_price)
+#         new_player = pl.DataProvider(player_id, budget, product_list, relevant_products, initianl_production_price,
+#                                      threshold_values,horizon)
+#         players['sellers'][player_id] = new_player
+#     return players
+
+def generate_valuations(number_of_buyers,product_list,min_valuation,max_valuation):
+    valutions_list = []
     for i in range(number_of_buyers):
-        # cost_estimation_strategy = AggregatedHistoryCostStrategy()
-        cost_estimation_strategy = LinearRegressionCostStrategty()
-        bid_strategy = NashEquilibriumBidStrategy()
+        valuations = {p:random.randint(min_valuation,max_valuation) for p in product_list}
+        valutions_list.append(valuations)
+    return valutions_list
+
+def assign_valuations_to_buyers(buyers,valutions_list,offset):
+    for i,buyer in enumerate(buyers):
+        buyers[buyer].set_valuations(valutions_list[(i+offset)%len(valutions_list)])
+
+def generate_buyers(budget,product_list,horizon,players,types_of_buyers):
+
+    for i,type in enumerate(types_of_buyers):
+        cost_estimation_strategy = type
         player_id = 'buyer_' + str(i)
-        budget = generate_random_budget(minimal_buying_budget, maximal_buying_budget)
-        initial_consumption_utility = set_initial_consumption_utility(product_list, constant_consumption_utility)
-        new_player = pl.DataConsumer(player_id, budget, product_list, initial_consumption_utility,
-                                     horizon)
+        new_player = pl.DataConsumer(player_id, budget, product_list,horizon)
 
         new_player.set_cost_estimation_strategy(cost_estimation_strategy)
-        new_player.set_bid_strategy(bid_strategy)
-
         players['buyers'][player_id] = new_player
-    for i in range(number_of_sellers):
+
+def generate_sellers(product_list,number_of_products_per_seller,horizon,players):
+    types_of_sellers = [AdaptiveSellerStrategy(),LinearSellerStrategy()]
+    for i,type in enumerate(types_of_sellers):
         player_id = 'seller_' + str(i)
-        budget = generate_random_budget(minimal_selling_budget, maximal_selling_budget)
-        initial_production_price = set_initial_production_price(product_list, constant_production_price)
         relevant_products = random.sample(product_list, number_of_products_per_seller)
-        threshold_values = set_threshold_values(relevant_products, minimal_selling_price, maximal_selling_price)
-        new_player = pl.DataProvider(player_id, budget, product_list, relevant_products, initial_production_price,
-                                     threshold_values,horizon)
+        new_player = pl.DataProvider(player_id, product_list, relevant_products,horizon)
+        new_player.set_selling_strategy(type)
         players['sellers'][player_id] = new_player
-    return players
 
 
 def generate_data_products(number_of_products, minimal_number_of_examples,

@@ -35,7 +35,7 @@ class SimpleSellingContract(Contract):
         seller, buyer = stakeholders[0], stakeholders[1]
         actual_price = seller.get_current_selling_price(product)
         buyer.add_inventory(product, 1)
-        seller.budget += actual_price
+        # seller.budget += actual_price
         buyer.budget -= actual_price
         return actual_price
 

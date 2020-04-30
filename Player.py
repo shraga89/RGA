@@ -6,7 +6,7 @@ from Knapsack import NaiveKnapsack
 
 
 class Player:
-    def __init__(self, id, _type, budget, products,
+    def __init__(self, id, _type, products,
                  setting_initial_prices='random'):
         self.id = id
         self.type = _type
@@ -14,7 +14,6 @@ class Player:
         self.price_history = pd.DataFrame(columns=['turn', 'buyer', 'seller', 'product', 'outcome',
                                                    'actual_price', 'selling_price', 'buying_price'])
         self.current_prices = {}  # key is tuple (product, selling\buying price)
-        self.budget = budget
         self.all_existing_products = products
         self.products_in_inventory = [{p: 0 for p in products}, ]
 
@@ -197,8 +196,8 @@ class RationalPlayer(Player):
 
 class DataPlayer(Player):
 
-    def __init__(self, id, _type, budget, products,  horizon):
-        super().__init__(id, _type, budget, products)
+    def __init__(self, id, _type, products,  horizon):
+        super().__init__(id, _type, products)
         # TODO: UPDATE price_history
         self.price_history = pd.DataFrame(columns=['turn', 'buyer', 'seller', 'product', 'outcome',
                                                    'actual_price', 'selling_price', 'buying_price'])
@@ -234,12 +233,8 @@ class DataPlayer(Player):
 
 class DataProvider(DataPlayer):
 
-    def __init__(self, id, budget, products, relevant_products, initial_production_price: dict,
-                 threshold_values, horizon):
-        super().__init__(id, 'seller', budget, products, horizon)
-        self.production_prices.append(initial_production_price)
-        self.utility_history = {"algorithm": {}, "budget": {}}  # TODO: check if we should remove "algorithm" key
-        self.threshold_prices = threshold_values
+    def __init__(self, id, products, relevant_products, horizon):
+        super().__init__(id, 'seller', products, horizon)
         self.selling_strategy = None
         self.relevant_products = relevant_products
         for p in self.relevant_products:
@@ -264,32 +259,28 @@ class DataProvider(DataPlayer):
     def update_budget(self):  # exisits for the sake of possible future directions
         self.budget = self.budget
 
-    def set_selling_price(self, product):
-        last_price = self.get_current_selling_price(product)
+    # def set_selling_price(self, product):
+    #     last_price = self.get_current_selling_price(product)
 
-    def update_utility_dict(self, turn):
-        budget_utility = self.utility.calculate_budget_utility(self.budget)
-        self.utility_history["budget"][turn] = budget_utility  # for later statistic
+
 
 
 class DataConsumer(DataPlayer):
 
-    def __init__(self, id, budget, products, initial_consumption_utility: dict, horizon):
-        super().__init__(id, 'buyer', budget, products, horizon)
-        self.consumption_utilities.append(initial_consumption_utility)
-        self.utility_history = {"algorithm": {}, "budget": {}}
+    def __init__(self, id, budget, products, horizon):
+        super(DataConsumer,self).__init__(id, 'buyer', products, horizon)
         self.product_turn_bought = {}  # what turn the product was bought
-        self.product_values_for_player = initial_consumption_utility  # TODO: CAHNGE TO FIT THE CODE!!
         self.cost_estimation_strategy = None
+        self.valuations = None
         self.bid_strategy = None
+        self.budget = budget
+
+    def set_valuations(self,valuations):
+        self.valuations = valuations
 
     def set_cost_estimation_strategy(self,
                                      strategy):  # sets the strategy class of player - enables to change strategies during simulation
         self.cost_estimation_strategy = strategy
-
-    def set_bid_strategy(self,
-                         strategy):  # sets the strategy class of player - enables to change strategies during simulation
-        self.bid_strategy = strategy
 
     def determine_product_cost(self, product, rellevant_sellers, turn,history,evaluations):
         costs = []
@@ -303,7 +294,8 @@ class DataConsumer(DataPlayer):
                 seller_price_history = df.apply(pd.to_numeric).groupby("turn").mean()["actual_price"].tolist()
             cost = self.cost_estimation_strategy.cost_estimation(price_history=seller_price_history,
                                                                  evaluation=evaluations[product])
-            costs.append(cost[0])
+
+            costs.append(cost)
         minimum_cost = min(costs)
         self.set_buying_price(product, minimum_cost)
         return minimum_cost
@@ -325,7 +317,7 @@ class DataConsumer(DataPlayer):
         costs = {}
         products_not_owned = [product for product in self.all_existing_products if self.products_in_inventory[-1][product]<=0]
         knapsack = NaiveKnapsack(self,products_not_owned)
-        evaluations = {product:self.consumption_utilities[-1][product] * (self.horizon - turn) for product in products_not_owned}
+        evaluations = {product:self.valuations[product] * (self.horizon - turn) for product in products_not_owned}
         for product in products_not_owned:
             relevant_sellers = [seller_id for seller_id, seller in players['sellers'].items()
                                 if seller.has_product_available(product)]
