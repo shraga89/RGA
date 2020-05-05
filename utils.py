@@ -1,6 +1,7 @@
 import Player as pl
 import random
 import Product as pr
+import os,shutil
 from BuyerStrategy import NashEquilibriumBidStrategy, AggregatedHistoryCostStrategy, LinearRegressionCostStrategty
 from SellerStrategy import AdaptiveSellerStrategy,LinearSellerStrategy
 
@@ -104,7 +105,7 @@ def generate_buyers(budget,product_list,horizon,players,types_of_buyers):
         players['buyers'][player_id] = new_player
 
 def generate_sellers(product_list,number_of_products_per_seller,horizon,players):
-    types_of_sellers = [AdaptiveSellerStrategy(),LinearSellerStrategy()]
+    types_of_sellers = [AdaptiveSellerStrategy(),LinearSellerStrategy()]*5
     for i,type in enumerate(types_of_sellers):
         player_id = 'seller_' + str(i)
         relevant_products = random.sample(product_list, number_of_products_per_seller)
@@ -126,3 +127,7 @@ def generate_data_products(number_of_products, minimal_number_of_examples,
         new_product = pr.DataProduct(product_name, domain, number_of_examples, number_of_features, additional_features)
         product_list.append(new_product)
     return product_list
+
+def clear_old_results(results_folder):
+    if os.path.exists(results_folder):
+        shutil.rmtree(results_folder, ignore_errors=True)

@@ -3,6 +3,7 @@ import random
 import pandas as pd
 from Knapsack import NaiveKnapsack
 from Contract import *
+import os
 from random import shuffle, randint
 
 
@@ -148,13 +149,16 @@ class DataMarketSimulation(Simulation):
         print_df = self.budget_history.copy()
         print_df.to_csv(fname)
 
-    def run_simulation(self,offset):
+    def run_simulation(self,offset,simulation_number,output_folder):
+        current_output_folder = output_folder+"/"+str(offset)+"/"
+        if not os.path.exists(current_output_folder):
+            os.makedirs(current_output_folder)
         for t in range(self.horizon):
             self.run_one_step()
-            self.print_end_result(True, None, self.turn)
+            # self.print_end_result(True, None, self.turn)
             self.turn += 1
-        self.print_end_result(False, 'sim'+str(offset)+'.csv',None)
-        self.print_budget_results("budget_results_"+str(offset)+".csv")
+        # self.print_end_result(False, 'sim'+str(offset)+'.csv',None)
+        self.print_budget_results(current_output_folder+"/budget_results_"+str(simulation_number)+".csv")
 
     def run_one_step(self):
         relevant_buyers = {}
