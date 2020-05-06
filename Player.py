@@ -16,9 +16,13 @@ class Player:
         self.current_prices = {}  # key is tuple (product, selling\buying price)
         self.all_existing_products = products
         self.products_in_inventory = [{p: 0 for p in products}, ]
-
+        self.last_price = {}
+        self.initial_prices = {}
         for p in products:
-            self.set_initial_prices(p, setting_initial_prices)
+            initial_price = self.set_initial_prices(p, setting_initial_prices)
+            self.initial_prices[p] = initial_price
+
+
 
     def retrieve_price_history(self, product) -> list:
         price_history = self.price_history[
@@ -67,7 +71,7 @@ class Player:
                                                             'buying_price': current_price},
                                                            ignore_index=True)
             self.price_limits[(product, 'selling_price')] = MAXIMAL_BUYING_PRICE + 1
-
+        return current_price
     def get_prices_by_time(self, timestamp=0):
         buying_price = dict()
         selling_price = dict()
@@ -201,14 +205,14 @@ class DataPlayer(Player):
         # TODO: UPDATE price_history
         self.price_history = pd.DataFrame(columns=['turn', 'buyer', 'seller', 'product', 'outcome',
                                                    'actual_price', 'selling_price', 'buying_price'])
-        for p in products:
-            self.set_initial_prices(p)
+        # for p in products:
+        #     self.set_initial_prices(p)
         self.production_prices = []
         self.consumption_utilities = []
         self.horizon = horizon
 
     def set_initial_prices(self, product, method='random'):
-        self.set_random_initial_prices(product)
+        return self.set_random_initial_prices(product)
 
     @abstractmethod
     def set_buying_price(self, product):
@@ -237,8 +241,11 @@ class DataProvider(DataPlayer):
         super().__init__(id, 'seller', products, horizon)
         self.selling_strategy = None
         self.relevant_products = relevant_products
+        self.sold_last_turn = {}
+
         for p in self.relevant_products:
             self.products_in_inventory[-1][p]=1
+            self.sold_last_turn[p]=False
 
     def set_selling_strategy(self, strategy):
         self.selling_strategy = strategy
@@ -259,8 +266,10 @@ class DataProvider(DataPlayer):
     def update_budget(self):  # exisits for the sake of possible future directions
         self.budget = self.budget
 
-    # def set_selling_price(self, product):
-    #     last_price = self.get_current_selling_price(product)
+    def set_selling_prices(self,turn):
+        for product in self.relevant_products:
+            updated_price = self.selling_strategy.set_selling_price(initial_price=self.initial_prices[product],num_of_turn=turn,total_turns=self.horizon,step=1,sold_last_turn=self.sold_last_turn[product],last_price=self.current_prices[(product,"selling_price")])
+            self.current_prices[(product,"selling_price")] = updated_price
 
 
 

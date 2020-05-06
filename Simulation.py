@@ -160,8 +160,15 @@ class DataMarketSimulation(Simulation):
         # self.print_end_result(False, 'sim'+str(offset)+'.csv',None)
         self.print_budget_results(current_output_folder+"/budget_results_"+str(simulation_number)+".csv")
 
+
+    def reset_selling_indicator(self):
+        for seller in self.players["sellers"]:
+            for product in self.players["sellers"][seller].sold_last_turn:
+                self.players["sellers"][seller].sold_last_turn[product]=False
+
     def run_one_step(self):
         relevant_buyers = {}
+        self.reset_selling_indicator()
         for buyer in set(self.players['buyers'].values()):
             buyer.update_budget() # This is done prior to the round in order to count only product purchased in previous rounds
             relevant_products = buyer.determine_relevant_products(self.turn, self.players,self.history)
@@ -175,6 +182,9 @@ class DataMarketSimulation(Simulation):
             if product not in relevant_buyers:
                 continue
             self.run_one_step_for_single_product(product, relevant_buyers[product])
+
+        for seller in self.players["sellers"]:
+            self.players["sellers"][seller].set_selling_prices(self.turn)
 
         for buyer in set(self.players['buyers'].values()):
 
@@ -196,6 +206,7 @@ class DataMarketSimulation(Simulation):
                 if transaction_indicator:
                     price = self.contract.enact_contract([matched_seller, buyer], product)
                     buyers_dict.pop(buyer)
+                    matched_seller.sold_last_turn[product]=True
                 else:
                     buyers_dict[buyer].remove(matched_seller)
                     if not buyers_dict[buyer]:

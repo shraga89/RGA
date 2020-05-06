@@ -105,7 +105,8 @@ def generate_buyers(budget,product_list,horizon,players,types_of_buyers):
         players['buyers'][player_id] = new_player
 
 def generate_sellers(product_list,number_of_products_per_seller,horizon,players):
-    types_of_sellers = [AdaptiveSellerStrategy(),LinearSellerStrategy()]*5
+    # types_of_sellers = [AdaptiveSellerStrategy(),LinearSellerStrategy()]*5
+    types_of_sellers = [LinearSellerStrategy()]*10
     for i,type in enumerate(types_of_sellers):
         player_id = 'seller_' + str(i)
         relevant_products = random.sample(product_list, number_of_products_per_seller)
