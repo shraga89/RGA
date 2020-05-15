@@ -29,7 +29,7 @@ class NoisyLinearSellerStrategy(LinearSellerStrategy):
 
     def set_selling_price(self, **kwargs):
         raw_price = super(NoisyLinearSellerStrategy, self).set_selling_price(**kwargs)
-        noise = np.random.normal(raw_price, raw_price/10)
+        noise = np.random.normal(raw_price, kwargs['noise sd'])
         return raw_price + noise
 
 
@@ -54,14 +54,14 @@ class NoisyAdaptiveSellerStrategy(AdaptiveSellerStrategy):
 
     def set_selling_price(self, **kwargs):
         raw_price = super(NoisyAdaptiveSellerStrategy, self).set_selling_price(**kwargs)
-        noise = np.random.normal(raw_price, raw_price/10)
+        noise = np.random.normal(raw_price, kwargs['noise sd'])
         return raw_price + noise
 
 
-# class MarketPriceStrategy(SellerStrategy):
-#
-#     def __init__(self):
-#         super().__init__()
-#
-#     def set_selling_price(self, **kwargs):
-#         pass
+class MarketPriceStrategy(SellerStrategy):
+
+    def __init__(self):
+        super().__init__()
+
+    def set_selling_price(self, **kwargs):
+        return kwargs['market price'] - 1
