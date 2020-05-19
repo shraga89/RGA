@@ -26,7 +26,7 @@ def main():
     for offset in range(len(valuations_list)):
         assign_valuations_to_buyers(players["buyers"], valuations_list, offset)
         for simulation_number in range(NUMBER_OF_RUNS_PER_OFFSET):
-            my_sim = Simulation.DataMarketSimulation(TIME_HORIZON, products_list, players, contract)
+            my_sim = Simulation.DataMarketSimulation(TIME_HORIZON, products_list, players, contract,NOISE_SD)
             my_sim.run_simulation(offset,simulation_number,OUTPUT_FOLDER)
             generate_buyers(BUDGET, products_list, TIME_HORIZON, players, types_of_buyers)
             assign_valuations_to_buyers(players["buyers"], valuations_list, offset)

@@ -19,7 +19,7 @@ class LinearSellerStrategy(SellerStrategy):
         initial_price = kwargs["initial_price"]
         num_of_turn = kwargs["num_of_turn"]
         total_turns = kwargs["total_turns"]
-        return initial_price * (total_turns - num_of_turn) / total_turns
+        return max(initial_price * (total_turns - num_of_turn) / total_turns,0)
 
 
 class NoisyLinearSellerStrategy(LinearSellerStrategy):
@@ -29,8 +29,8 @@ class NoisyLinearSellerStrategy(LinearSellerStrategy):
 
     def set_selling_price(self, **kwargs):
         raw_price = super(NoisyLinearSellerStrategy, self).set_selling_price(**kwargs)
-        noise = np.random.normal(raw_price, kwargs['noise sd'])
-        return raw_price + noise
+        noise = np.random.normal(0, kwargs['noise_sd'])
+        return max(raw_price + noise,0)
 
 
 class AdaptiveSellerStrategy(SellerStrategy):
@@ -44,7 +44,7 @@ class AdaptiveSellerStrategy(SellerStrategy):
         selling_price = last_price
         if not sold_last_turn:
             selling_price -= step
-        return selling_price
+        return max(selling_price,0)
 
 
 class NoisyAdaptiveSellerStrategy(AdaptiveSellerStrategy):
@@ -54,8 +54,8 @@ class NoisyAdaptiveSellerStrategy(AdaptiveSellerStrategy):
 
     def set_selling_price(self, **kwargs):
         raw_price = super(NoisyAdaptiveSellerStrategy, self).set_selling_price(**kwargs)
-        noise = np.random.normal(raw_price, kwargs['noise sd'])
-        return raw_price + noise
+        noise = np.random.normal(0, kwargs['noise_sd'])
+        return max(raw_price + noise,0)
 
 
 class MarketPriceStrategy(SellerStrategy):

@@ -266,9 +266,9 @@ class DataProvider(DataPlayer):
     def update_budget(self):  # exisits for the sake of possible future directions
         self.budget = self.budget
 
-    def set_selling_prices(self,turn):
+    def set_selling_prices(self,turn,noise_sd):
         for product in self.relevant_products:
-            updated_price = self.selling_strategy.set_selling_price(initial_price=self.initial_prices[product],num_of_turn=turn,total_turns=self.horizon,step=1,sold_last_turn=self.sold_last_turn[product],last_price=self.current_prices[(product,"selling_price")])
+            updated_price = self.selling_strategy.set_selling_price(initial_price=self.initial_prices[product],num_of_turn=turn,total_turns=self.horizon,step=1,sold_last_turn=self.sold_last_turn[product],last_price=self.current_prices[(product,"selling_price")],noise_sd=noise_sd)
             self.current_prices[(product,"selling_price")] = updated_price
 
 
@@ -283,6 +283,7 @@ class DataConsumer(DataPlayer):
         self.valuations = None
         self.bid_strategy = None
         self.budget = budget
+        self.costs_dict = {}
 
     def set_valuations(self,valuations):
         self.valuations = valuations
@@ -291,11 +292,12 @@ class DataConsumer(DataPlayer):
                                      strategy):  # sets the strategy class of player - enables to change strategies during simulation
         self.cost_estimation_strategy = strategy
 
-    def determine_product_cost(self, product, rellevant_sellers, turn,history,evaluations):
+    def determine_product_cost(self, product, rellevant_sellers,history,evaluations):
         costs = []
+        costs_dict = {}
         for seller in rellevant_sellers:
             df = history[
-                (history["product"] == product) & (history["seller"] == seller) & (history["actual_price"].notnull())][
+                (history["product"] == product) & (history["seller"] == seller.get_id()) & (history["actual_price"].notnull())][
                 ["turn", "actual_price"]]
             if df.empty:
                 seller_price_history = []
@@ -305,9 +307,10 @@ class DataConsumer(DataPlayer):
                                                                  evaluation=evaluations[product])
 
             costs.append(cost)
+            costs_dict[seller] = cost
         minimum_cost = min(costs)
         self.set_buying_price(product, minimum_cost)
-        return minimum_cost
+        return minimum_cost,costs_dict
 
     def is_product_relevant(self, product):
         return product in self.relevant_products and self.budget >= self.get_current_buying_price(product) \
@@ -333,15 +336,18 @@ class DataConsumer(DataPlayer):
 
     def determine_relevant_products(self, turn,players,history):
         costs = {}
+        if turn not in self.costs_dict:
+            self.costs_dict[turn]={}
         products_not_owned = [product for product in self.all_existing_products if self.products_in_inventory[-1][product]<=0]
         knapsack = NaiveKnapsack(self,products_not_owned)
         evaluations = {product:self.valuations[product] * (self.horizon - turn) for product in products_not_owned}
         for product in products_not_owned:
-            relevant_sellers = [seller_id for seller_id, seller in players['sellers'].items()
+            relevant_sellers = [seller for seller_id, seller in players['sellers'].items()
                                 if seller.has_product_available(product)]
             if not relevant_sellers:
                 continue
-            product_cost = self.determine_product_cost(product, relevant_sellers,turn,history,evaluations)
+            product_cost,tmp_costs_dict = self.determine_product_cost(product, relevant_sellers,history,evaluations)
             costs[product] = product_cost
+            self.costs_dict[turn][product]=tmp_costs_dict
         relevant_products = knapsack.solve(turn, self.horizon, costs,evaluations)
         return relevant_products

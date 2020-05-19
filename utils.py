@@ -3,7 +3,7 @@ import random
 import Product as pr
 import os,shutil
 from BuyerStrategy import NashEquilibriumBidStrategy, AggregatedHistoryCostStrategy, LinearRegressionCostStrategty
-from SellerStrategy import AdaptiveSellerStrategy,LinearSellerStrategy
+from SellerStrategy import AdaptiveSellerStrategy,LinearSellerStrategy,NoisyAdaptiveSellerStrategy,NoisyLinearSellerStrategy
 
 def set_initial_production_price(products, constant_production_price):
     initial_production_prices = dict()
@@ -105,8 +105,9 @@ def generate_buyers(budget,product_list,horizon,players,types_of_buyers):
         players['buyers'][player_id] = new_player
 
 def generate_sellers(product_list,number_of_products_per_seller,horizon,players):
-    # types_of_sellers = [AdaptiveSellerStrategy(),LinearSellerStrategy()]*5
-    types_of_sellers = [LinearSellerStrategy()]*10
+    types_of_sellers = [LinearSellerStrategy(),AdaptiveSellerStrategy(),NoisyLinearSellerStrategy(),NoisyAdaptiveSellerStrategy()]*2
+    # types_of_sellers = [AdaptiveSellerStrategy(),]*10
+    # types_of_sellers = [LinearSellerStrategy(),AdaptiveSellerStrategy(),NoisyLinearSellerStrategy()]*3
     for i,type in enumerate(types_of_sellers):
         player_id = 'seller_' + str(i)
         relevant_products = random.sample(product_list, number_of_products_per_seller)

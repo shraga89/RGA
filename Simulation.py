@@ -132,12 +132,14 @@ class NaiveSimulation(Simulation):
 
 class DataMarketSimulation(Simulation):
 
-    def __init__(self, horizon, product_list, players_dict, contract: Contract):
+    def __init__(self, horizon, product_list, players_dict, contract: Contract,noise_sd):
         super().__init__(horizon, product_list, players_dict)
         self.history = pd.DataFrame(columns=['turn', 'buyer', 'seller', 'product', 'actual_price','budget'])
         self.budget_history = pd.DataFrame(columns=['turn', 'buyer','budget','owned_products'])
+        self.price_predictions = pd.DataFrame(columns=['turn', 'buyer','seller','product','estimated_cost',"real_cost"])
         self.turn = 0
         self.contract = contract
+        self.noise_sd=noise_sd
 
     def create_inventory(self):
         for seller in self.players['sellers'].values():
@@ -145,8 +147,8 @@ class DataMarketSimulation(Simulation):
                 seller.gather_data(product)
 
 
-    def print_budget_results(self,fname):
-        print_df = self.budget_history.copy()
+    def print_df_results(self,fname,df):
+        print_df = df.copy()
         print_df.to_csv(fname)
 
     def run_simulation(self,offset,simulation_number,output_folder):
@@ -155,10 +157,9 @@ class DataMarketSimulation(Simulation):
             os.makedirs(current_output_folder)
         for t in range(self.horizon):
             self.run_one_step()
-            # self.print_end_result(True, None, self.turn)
             self.turn += 1
-        # self.print_end_result(False, 'sim'+str(offset)+'.csv',None)
-        self.print_budget_results(current_output_folder+"/budget_results_"+str(simulation_number)+".csv")
+        self.print_df_results(current_output_folder+"/budget_results_"+str(simulation_number)+".csv",self.budget_history)
+        self.print_df_results(current_output_folder+"/estimation_results_"+str(simulation_number)+".csv",self.price_predictions)
 
 
     def reset_selling_indicator(self):
@@ -178,21 +179,40 @@ class DataMarketSimulation(Simulation):
                 else:
                     relevant_buyers[product].append(buyer)
 
+        self.update_dataframes()
         for product in self.product_list:
             if product not in relevant_buyers:
                 continue
             self.run_one_step_for_single_product(product, relevant_buyers[product])
-
         for seller in self.players["sellers"]:
-            self.players["sellers"][seller].set_selling_prices(self.turn)
+            self.players["sellers"][seller].set_selling_prices(self.turn,self.noise_sd)
 
+        # for buyer in set(self.players['buyers'].values()):
+        #
+        #     self.budget_history = self.budget_history.append({"turn":self.turn,
+        #                                                       "buyer":buyer.get_id(),
+        #                                                       "budget":buyer.budget,
+        #                                                       'owned_products':buyer.get_owned_product_repr()
+        #                                                       },ignore_index=True)
+
+
+    def update_dataframes(self):
         for buyer in set(self.players['buyers'].values()):
-
-            self.budget_history = self.budget_history.append({"turn":self.turn,
-                                                              "buyer":buyer.get_id(),
-                                                              "budget":buyer.budget,
-                                                              'owned_products':buyer.get_owned_product_repr()
-                                                              },ignore_index=True)
+            self.budget_history = self.budget_history.append({"turn": self.turn,
+                                                              "buyer": buyer.get_id(),
+                                                              "budget": buyer.budget,
+                                                              'owned_products': buyer.get_owned_product_repr()
+                                                              }, ignore_index=True)
+            for product in buyer.costs_dict[self.turn]:
+                for seller in buyer.costs_dict[self.turn][product]:
+                    real_selling_price = seller.get_current_selling_price(product)
+                    self.price_predictions = self.price_predictions.append({"turn": self.turn,
+                                                              "buyer": buyer.get_id(),
+                                                              "seller":seller.get_id(),
+                                                              "product": product,
+                                                              "estimated_cost":buyer.costs_dict[self.turn][product][seller],
+                                                              "real_cost":real_selling_price
+                                                              }, ignore_index=True)
 
     def run_one_step_for_single_product(self, product, relevant_buyers):
         sellers_list = [seller for seller_id, seller in self.players['sellers'].items()
@@ -202,6 +222,7 @@ class DataMarketSimulation(Simulation):
             for buyer in list(buyers_dict.keys()):
                 matched_seller = random.choice(buyers_dict[buyer])
                 transaction_indicator, outcome = self.contract.check_prerequisites([matched_seller, buyer], product)
+
                 price = None
                 if transaction_indicator:
                     price = self.contract.enact_contract([matched_seller, buyer], product)
